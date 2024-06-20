@@ -45,7 +45,7 @@ async def ban_ips(request: Request, call_next: Callable):
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
-app.include_router(contacts.router, prefix="/api")
+# app.include_router(contacts.router, prefix="/api")
 
 
 @app.on_event("startup")
