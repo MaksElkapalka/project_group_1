@@ -93,40 +93,40 @@ async def login(
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(status_code=401, detail=messages.INVALID_PASSWORD)
     access_token = await auth_service.create_access_token(data={"sub": user.email})
-    refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
-    await repositories_users.update_token(user, refresh_token, db)
+    # refresh_token = await auth_service.create_refresh_token(data={"sub": user.email})
+    # await repositories_users.update_token(user, refresh_token, db)
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
+        # "refresh_token": refresh_token,
         "token_type": "bearer",
     }
 
 
-@router.get("/refresh_token", response_model=TokenSchema)
-async def refresh_token(
-    db: AsyncSession = Depends(get_db), token: str = Depends(get_refresh_token)
-):
-    """
-    The refresh_token function is used to refresh the access token.
-        The function will check if the user exists and if it does, it will return a new access_token and refresh_token.
-        If not, an error message is returned.
+# @router.get("/refresh_token", response_model=TokenSchema)
+# async def refresh_token(
+#     db: AsyncSession = Depends(get_db), token: str = Depends(get_refresh_token)
+# ):
+#     """
+#     The refresh_token function is used to refresh the access token.
+#         The function will check if the user exists and if it does, it will return a new access_token and refresh_token.
+#         If not, an error message is returned.
 
-    :param db: AsyncSession: Get the database session
-    :param token: str: Get the refresh token from the request header
-    :return: A dict with the new access_token and refresh_token
-    """
-    email = await auth_service.decode_refresh_token(token)
-    user = await repositories_users.get_user_by_email(email, db)
-    if user.refresh_token != token:
-        raise HTTPException(status_code=401, detail=messages.INVALID_REFRESH_TOKEN)
-    access_token = await auth_service.create_access_token(data={"sub": email})
-    refresh_token = await auth_service.create_refresh_token(data={"sub": email})
-    await repositories_users.update_token(user, refresh_token, db)
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+#     :param db: AsyncSession: Get the database session
+#     :param token: str: Get the refresh token from the request header
+#     :return: A dict with the new access_token and refresh_token
+#     """
+#     email = await auth_service.decode_refresh_token(token)
+#     user = await repositories_users.get_user_by_email(email, db)
+#     if user.refresh_token != token:
+#         raise HTTPException(status_code=401, detail=messages.INVALID_REFRESH_TOKEN)
+#     access_token = await auth_service.create_access_token(data={"sub": email})
+#     refresh_token = await auth_service.create_refresh_token(data={"sub": email})
+#     await repositories_users.update_token(user, refresh_token, db)
+#     return {
+#         "access_token": access_token,
+#         "refresh_token": refresh_token,
+#         "token_type": "bearer",
+#     }
 
 
 @router.get("/confirmed_email/{token}")

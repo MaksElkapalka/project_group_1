@@ -37,20 +37,20 @@ async def create_user(body: UserSchema, db: AsyncSession = Depends(get_db)):
     return new_user
 
 
-async def update_token(
-    user: User, token: str | None = None, db: AsyncSession = Depends(get_db)
-) -> None:
-    """
-    The update_token function updates the refresh token for a user.
+# async def update_token(
+#     user: User, token: str | None = None, db: AsyncSession = Depends(get_db)
+# ) -> None:
+#     """
+#     The update_token function updates the refresh token for a user.
 
-    :param user: User: Pass the user object to the function
-    :param token: str | None: Update the refresh token of a user
-    :param db: AsyncSession: Get the database session
-    :return: None
-    """
-    if token is not None:
-        user.refresh_token = token
-        await db.commit()
+#     :param user: User: Pass the user object to the function
+#     :param token: str | None: Update the refresh token of a user
+#     :param db: AsyncSession: Get the database session
+#     :return: None
+#     """
+#     if token is not None:
+#         user.refresh_token = token
+#         await db.commit()
 
 
 async def confirmed_email(email: str, db: AsyncSession) -> None:

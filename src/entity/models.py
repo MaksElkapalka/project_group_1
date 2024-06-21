@@ -1,6 +1,7 @@
+import enum
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, func, Text, Table, Column
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, func, Text, Table, Column, Enum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 default_avatar_url = (
@@ -57,6 +58,11 @@ class Comment(Base):
     photo: Mapped['Photo'] = relationship("Photo", back_populates='comments')
     user: Mapped['User'] = relationship("User", back_populates='comments')
 
+class Role(enum.Enum):
+    admin: str = 'admin'
+    moderator: str = 'moderator'
+    user: str = 'user'
+
 
 class User(Base):
     __tablename__ = "users"
@@ -70,6 +76,7 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now()
     )
+    role: Mapped[Enum] = mapped_column('role', Enum(Role), default=Role.user, nullable=True)
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
     avatar: Mapped[str] = mapped_column(
         String(255), nullable=True, default=default_avatar_url
