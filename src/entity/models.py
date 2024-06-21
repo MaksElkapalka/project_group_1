@@ -13,10 +13,10 @@ class Base(DeclarativeBase):
     pass
 
 
-photo_tags_table = Table(
-    "photo_tags",
+image_tag_table = Table(
+    "image_tags",
     Base.metadata,
-    Column("photo_id", Integer, ForeignKey("photos.id"), primary_key=True),
+    Column("image_id", Integer, ForeignKey("images.id"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True)
 )
 
@@ -25,11 +25,11 @@ class Tag(Base):
     __tablename__ = "tags"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
-    photos: Mapped[list['Photo']] = relationship('Photo', secondary=photo_tags_table, back_populates='tags')
+    images: Mapped[list['Image']] = relationship('Image', secondary=image_tag_table, back_populates='tags')
 
 
-class Photo(Base):
-    __tablename__ = "photos"
+class Image(Base):
+    __tablename__ = "images"
     id: Mapped[int] = mapped_column(primary_key=True)
     url: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text)
@@ -39,10 +39,10 @@ class Photo(Base):
     )
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
     user: Mapped["User"] = relationship(
-        "User", back_populates="photos", lazy="joined"
+        "User", back_populates="images", lazy="joined"
     )
-    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="photo", cascade="all, delete-orphan")
-    tags: Mapped[list["Tag"]] = relationship("Tag", secondary=photo_tags_table, back_populates="photos")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="image", cascade="all, delete-orphan")
+    tags: Mapped[list["Tag"]] = relationship("Tag", secondary=image_tag_table, back_populates="images")
 
 
 class Comment(Base):
@@ -53,10 +53,11 @@ class Comment(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now()
     )
-    photo_id: Mapped[int] = mapped_column(Integer, ForeignKey('photos.id'))
+    image_id: Mapped[int] = mapped_column(Integer, ForeignKey('images.id'))
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'))
-    photo: Mapped['Photo'] = relationship("Photo", back_populates='comments')
+    image: Mapped['Image'] = relationship("Image", back_populates='comments')
     user: Mapped['User'] = relationship("User", back_populates='comments')
+
 
 class Role(enum.Enum):
     admin: str = 'admin'
@@ -70,16 +71,15 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[str] = mapped_column(String(20), default='user')
+    role: Mapped[Enum] = mapped_column('role', Enum(Role), default=Role.user, nullable=True)
     access_token: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now()
     )
-    role: Mapped[Enum] = mapped_column('role', Enum(Role), default=Role.user, nullable=True)
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
     avatar: Mapped[str] = mapped_column(
         String(255), nullable=True, default=default_avatar_url
     )
-    photos: Mapped[list["Photo"]] = relationship('Photo', back_populates='user')
+    images: Mapped[list["Image"]] = relationship('Image', back_populates='user')
     comments: Mapped[list["Comment"]] = relationship('Comment', back_populates='user')
