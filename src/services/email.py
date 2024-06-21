@@ -14,6 +14,7 @@ conf = ConnectionConfig(
     MAIL_PORT=config.MAIL_PORT,
     MAIL_SERVER=config.MAIL_SERVER,
     MAIL_FROM_NAME="HW-13",
+    MAIL_FROM_NAME="PhotoShare_01",
     MAIL_STARTTLS=False,
     MAIL_SSL_TLS=True,
     USE_CREDENTIALS=True,
