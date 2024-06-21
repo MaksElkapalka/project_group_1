@@ -1,12 +1,22 @@
 import enum
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, func, Text, Table, Column, Enum
+from sqlalchemy import (
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+    Text,
+    Table,
+    Column,
+    Enum,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-default_avatar_url = (
-    "https://res.cloudinary.com/restapp/image/upload/v1717342921/restapp/default.png"
-)
+default_avatar_url = "https://res.cloudinary.com/dl3r3kuc7/image/upload/v1719001257/default_avatar_siyhvc.png"
 
 
 class Base(DeclarativeBase):
@@ -43,6 +53,7 @@ class Image(Base):
     )
     comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="image", cascade="all, delete-orphan")
     tags: Mapped[list["Tag"]] = relationship("Tag", secondary=image_tag_table, back_populates="images")
+
 
 
 class Comment(Base):
