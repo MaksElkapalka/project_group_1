@@ -78,6 +78,11 @@ class Role(enum.Enum):
     moderator: str = "moderator"
     user: str = "user"
 
+class Role(enum.Enum):
+    admin: str = 'admin'
+    moderator: str = 'moderator'
+    user: str = 'user'
+
 
 class User(Base):
     __tablename__ = "users"
@@ -91,9 +96,7 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now()
     )
-    role: Mapped[Enum] = mapped_column(
-        "role", Enum(Role), default=Role.user, nullable=True
-    )
+    role: Mapped[Enum] = mapped_column('role', Enum(Role), default=Role.user, nullable=True)
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
     avatar: Mapped[str] = mapped_column(
         String(255), nullable=True, default=default_avatar_url

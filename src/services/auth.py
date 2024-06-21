@@ -77,63 +77,6 @@ class Auth:
         )
         return encoded_access_token
 
-    # async def create_refresh_token(
-    #     self, data: dict, expires_delta: Optional[timedelta] = None
-    # ) -> str:
-    #     """
-    #     The create_refresh_token function creates a refresh token for the user.
-    #         Args:
-    #             data (dict): The payload to be encoded in the JWT.
-    #             expires_delta (Optional[timedelta]): A timedelta object representing how long until this token expires. Defaults to 15 days if not provided.
-
-    #     :param self: Represent the instance of the class
-    #     :param data: dict: Pass the user's data to be encoded in the token
-    #     :param expires_delta: Optional[timedelta]: Set the expiration time of the refresh token
-    #     :return: A string of the encoded refresh token
-    #     """
-    #     to_encode = data.copy()
-    #     expire = datetime.utcnow() + (
-    #         expires_delta if expires_delta else timedelta(days=15)
-    #     )
-    #     to_encode.update(
-    #         {"iat": datetime.utcnow(), "exp": expire, "scope": "refresh_token"}
-    #     )
-    #     encoded_refresh_token = jwt.encode(
-    #         to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
-    #     )
-    #     return encoded_refresh_token
-
-    # async def decode_refresh_token(self, refresh_token: str) -> str:
-    #     """
-    #     The decode_refresh_token function takes a refresh token and decodes it.
-    #         If the scope is not 'refresh_token', then an HTTPException is raised.
-    #         If the email address in the payload does not exist, then an HTTPException is raised.
-
-    #     :param self: Represent the instance of the class
-    #     :param refresh_token: str: Pass the refresh token to the function
-    #     :return: A string, which is the email address of the user
-    #     """
-    #     try:
-    #         payload = jwt.decode(
-    #             refresh_token, self.SECRET_KEY, algorithms=[self.ALGORITHM]
-    #         )
-    #         if payload.get("scope") == "refresh_token":
-    #             email = payload.get("sub")
-    #             if email is None:
-    #                 raise HTTPException(
-    #                     status_code=status.HTTP_401_UNAUTHORIZED,
-    #                     detail="Invalid token payload",
-    #                 )
-    #             return email
-    #         raise HTTPException(
-    #             status_code=status.HTTP_401_UNAUTHORIZED,
-    #             detail="Invalid scope for token",
-    #         )
-    #     except JWTError:
-    #         raise HTTPException(
-    #             status_code=status.HTTP_401_UNAUTHORIZED,
-    #             detail="Could not validate credentials",
-    #         )
 
     async def get_current_user(
         self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
