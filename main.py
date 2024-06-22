@@ -6,17 +6,15 @@ from fastapi.responses import JSONResponse
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis
 from sqlalchemy import text
-from src.image import upload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
 from src.routes import auth, users, tags
 from src.conf.config import config
+# from src.image.images import upload
 
 app = FastAPI()
-
-app.include_router(upload.router, prefix="/images", tags=["images"])
 
 banned_ips = [
     ip_address("192.168.1.1"),
@@ -49,6 +47,7 @@ async def ban_ips(request: Request, call_next: Callable):
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
+# app.include_router(upload.router, prefix="/images", tags=["images"])
 
 
 @app.on_event("startup")
