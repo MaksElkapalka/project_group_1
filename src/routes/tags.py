@@ -5,13 +5,15 @@ from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.entity.models import User
+from src.entity.models import User, Role
 from src.repository import tags as repositories_tag
 from src.schemas.tag import TagResponse, TagSchema
 from src.services.auth import auth_service
+from src.services.roles import RoleAccess
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 
+access_to_route_all = RoleAccess([Role.admin, Role.moderator])
 
 @router.get(
     "/",
