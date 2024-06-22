@@ -123,6 +123,39 @@ class Auth:
             user = pickle.loads(user)
         return user
 
+    async def get_current_active_user(self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+    ):
+        """
+        Get the current active user based on the access token.
+
+        :param self: Represent the instance of a class
+        :param token: str: Pass the token to the function
+        :param db: AsyncSession: Get the database connection
+        :return: A user object
+        """
+        user = await self.get_current_user(token, db)
+        if not user.is_active:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are not active user")
+        return user
+
+    async def get_current_active_user_with_role(
+            self, required_role: str, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+    ):
+        """
+        Get the current active user based on the access token and check their role.
+
+        :param self: Represent the instance of a class
+        :param required_role: str: Required role for access
+        :param token: str: Pass the token to the function
+        :param db: AsyncSession: Get the database connection
+        :return: A user object
+        """
+
+        user = await self.get_current_active_user(token, db)
+        if user.role != required_role:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        return user
+
     def create_email_token(self, data: dict):
         """
         The create_email_token function takes a dictionary of data and returns a JWT token.
