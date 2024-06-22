@@ -55,9 +55,10 @@ async def crete_tag(body: TagSchema, db: AsyncSession, image: Image):
 #     return tag
 
 
-async def delete_tag(tag_name: int, 
-                     db: AsyncSession,
-                     ):
+async def delete_tag(
+    tag_name: int,
+    db: AsyncSession,
+):
     stmt = select(Tag).filter_by(name=tag_name)
     result = await db.execute(stmt)
     tag = result.scalar_one_or_none()
@@ -83,29 +84,6 @@ async def search_tags(
 
     if filters:
         query = query.filter(or_(*filters))
-
-    result = await db.execute(query)
-    return result.scalars().all()
-
-# TODO: Поясніть хтось нашо наступна функція
-
-async def get_birthdays(db: AsyncSession, user: User):
-    today = date.today()
-    upcoming_date = today + timedelta(days=7)
-
-    query = select(Tag).filter(
-        Tag.user_id == user.id,
-        or_(
-            and_(
-                extract("month", Tag.birthday) == today.month,
-                extract("day", Tag.birthday) >= today.day,
-            ),
-            and_(
-                extract("month", Tag.birthday) == upcoming_date.month,
-                extract("day", Tag.birthday) <= upcoming_date.day,
-            ),
-        ),
-    )
 
     result = await db.execute(query)
     return result.scalars().all()

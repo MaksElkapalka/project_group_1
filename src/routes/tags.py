@@ -15,6 +15,7 @@ router = APIRouter(prefix="/tags", tags=["tags"])
 
 access_to_route_all = RoleAccess([Role.admin, Role.moderator])
 
+
 @router.get(
     "/",
     response_model=List[TagResponse],
@@ -35,12 +36,11 @@ async def get_tags(
     response_model=TagResponse,
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
-async def get_tags(
+async def get_tag(
     tag_id: int = Path(ge=1),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ) -> TagResponse:
-
     tag = await repositories_tag.get_tag(tag_id, db, user)
     if tag is None:
         raise HTTPException(
@@ -48,6 +48,7 @@ async def get_tags(
             detail=f"tag with id {tag_id} not found",
         )
     return tag
+
 
 @router.post(
     "/",
@@ -69,7 +70,6 @@ async def create_tag(
     response_model=TagResponse,
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
-
 @router.delete(
     "/{tag_id}",
     response_model=TagResponse,
@@ -87,34 +87,3 @@ async def delete_tag(
             detail=f"Tag with id {tag_id} not found",
         )
     return tag
-
-
-@router.get(
-    "/search/",
-    response_model=List[TagResponse],
-    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
-)
-async def search_tags(
-    first_name: Optional[str] = None,
-    last_name: Optional[str] = None,
-    email: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(auth_service.get_current_user),
-) -> List[TagResponse]:
-    tags = await repositories_tag.search_tags(
-        first_name, last_name, email, db, user
-    )
-    return tags
-
-
-@router.get(
-    "/birthdays/",
-    response_model=List[TagResponse],
-    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
-)
-async def get_birthdays(
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(auth_service.get_current_user),
-) -> List[TagResponse]:
-    tags = await repositories_tag.get_birthdays(db, user)
-    return tags
