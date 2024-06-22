@@ -2,14 +2,7 @@ import pickle
 
 import cloudinary
 import cloudinary.uploader
-from fastapi import (
-    APIRouter,
-    Depends,
-    File,
-    UploadFile,
-    HTTPException,
-    status
-)
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException, status
 from fastapi_limiter.depends import RateLimiter
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +10,12 @@ from src.conf.config import config
 from src.database.db import get_db
 from src.entity.models import User
 from src.repository import users as repositories_users
-from src.schemas.user import UserResponse, UserUpdate, UserPublicResponse, UserRoleUpdate
+from src.schemas.user import (
+    UserResponse,
+    UserUpdate,
+    UserPublicResponse,
+    UserRoleUpdate,
+)
 from src.services.auth import auth_service
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -29,9 +27,11 @@ cloudinary.config(
 )
 
 
-@router.get("/profile/{username}",
-            response_model=UserPublicResponse,
-            dependencies=[Depends(RateLimiter(times=1, seconds=20))]
+# TODO: треба з запиту витягувати токен а з нього витягувати імейл  та шукати користувача по імейлу бо в база можуть бути декілька користувачів з однаковим іменем
+@router.get(
+    "/profile/{username}",
+    response_model=UserPublicResponse,
+    dependencies=[Depends(RateLimiter(times=1, seconds=20))],
 )
 async def read_user_profile(username: str, db: AsyncSession = Depends(get_db)) -> User:
     """
@@ -44,7 +44,9 @@ async def read_user_profile(username: str, db: AsyncSession = Depends(get_db)) -
 
     user = await repositories_users.get_user_by_username(username, db)
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return user
 
 
@@ -53,7 +55,9 @@ async def read_user_profile(username: str, db: AsyncSession = Depends(get_db)) -
     response_model=UserResponse,
     dependencies=[Depends(RateLimiter(times=1, seconds=20))],
 )
-async def get_current_user(user: User = Depends(auth_service.get_current_active_user)) -> User:
+async def get_current_user(
+    user: User = Depends(auth_service.get_current_active_user),
+) -> User:
     """
     The get_current_user function is a dependency that will be injected into the
         get_current_user endpoint. It uses the auth_service to retrieve the current user,
@@ -94,7 +98,9 @@ async def update_current_user(
 async def bun_user(
     username: str,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(lambda: auth_service.get_current_active_user_with_role("admin")),
+    admin: User = Depends(
+        lambda: auth_service.get_current_active_user_with_role("admin")
+    ),
 ):
     """
     Ban user by username, setting status for user inactive
@@ -108,14 +114,13 @@ async def bun_user(
     return user
 
 
-
-
-
 @router.put("/unban/{username}", response_model=UserResponse)
 async def unbun_user(
     username: str,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(lambda: auth_service.get_current_active_user_with_role("admin")),
+    admin: User = Depends(
+        lambda: auth_service.get_current_active_user_with_role("admin")
+    ),
 ):
     """
     Unban user by username, setting status for user active
