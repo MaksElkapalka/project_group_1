@@ -89,6 +89,8 @@ class User(Base):
         DateTime, default=func.now(), onupdate=func.now()
     )
     confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    image_count: Mapped[int] = mapped_column(Integer, default=0)
     avatar: Mapped[str] = mapped_column(
         String(255), nullable=True, default=default_avatar_url
     )

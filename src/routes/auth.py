@@ -92,6 +92,8 @@ async def login(
         raise HTTPException(status_code=401, detail=messages.NOT_CONFIRMED)
     if not auth_service.verify_password(body.password, user.password):
         raise HTTPException(status_code=401, detail=messages.INVALID_PASSWORD)
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail=messages.ACTIVE_STATUS)
     access_token = await auth_service.create_access_token(data={"sub": user.email})
     return {
         "access_token": access_token,
