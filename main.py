@@ -48,7 +48,7 @@ async def ban_ips(request: Request, call_next: Callable):
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
-app.include_router(images.router, prefix="/images", tags=["images"])
+app.include_router(images.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
 # app.include_router(upload.router, prefix="/images", tags=["images"])
 
