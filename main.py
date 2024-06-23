@@ -10,7 +10,8 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.routes import auth, users, tags, images
+
+from src.routes import auth, users, tags, images, comments
 from src.conf.config import config
 # from src.image.images import upload
 
@@ -48,6 +49,8 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
 app.include_router(images.router, prefix="/images", tags=["images"])
+app.include_router(comments.router, prefix="/api")
+# app.include_router(upload.router, prefix="/images", tags=["images"])
 
 
 @app.on_event("startup")

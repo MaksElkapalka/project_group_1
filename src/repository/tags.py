@@ -11,7 +11,7 @@ def create_tag(body: TagSchema, db: Session) -> Tag:
     return new_tag
 
 def add_tag(photo_id: int, tag_name: str, user_id: int, db: Session) -> Optional[Tag]:
-    photo = db.query(Photo).filter(Photo.id == photo_id, Photo.user_id == user_id).first()
+    photo = db.query(Image).filter(Image.id == photo_id, Image.user_id == user_id).first()
     if not photo:
         return None
 
