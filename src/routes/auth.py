@@ -95,6 +95,9 @@ async def login(
     if not user.is_active:
         raise HTTPException(status_code=401, detail=messages.ACTIVE_STATUS)
     access_token = await auth_service.create_access_token(data={"sub": user.email})
+
+    await repositories_users.update_token(user, access_token, db)
+
     return {
         "access_token": access_token,
         "token_type": "bearer",

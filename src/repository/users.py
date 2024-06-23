@@ -133,7 +133,8 @@ async def set_user_status(
     user = await get_user_by_email(email, db)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=messages.USER_NOT_FOUND)
+            status_code=status.HTTP_404_NOT_FOUND, detail=messages.USER_NOT_FOUND
+        )
     user.is_active = set_status
     await db.commit()
     await db.refresh(user)
@@ -141,7 +142,7 @@ async def set_user_status(
 
 
 async def update_user_role(
-        email: str, update_role: str, db: AsyncSession = Depends(get_db)
+    email: str, update_role: str, db: AsyncSession = Depends(get_db)
 ) -> None:
     """
     The set_user_status function updates the user's active status.
@@ -154,9 +155,15 @@ async def update_user_role(
     user = await get_user_by_email(email, db)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=messages.USER_NOT_FOUND)
+            status_code=status.HTTP_404_NOT_FOUND, detail=messages.USER_NOT_FOUND
+        )
     if update_role:
         user.role = update_role
     await db.commit()
     await db.refresh(user)
     return user
+
+
+async def update_token(user: User, token: str | None, db: AsyncSession):
+    user.access_token = token
+    await db.commit()
