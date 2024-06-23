@@ -7,7 +7,6 @@ from src.schemas.tag import TagSchema, TagResponse
 from src.repository import tags as repository_tags
 from src.services.auth import auth_service 
 from src.entity.models import User
-from src.services.auth import auth_service
 
 router = APIRouter(prefix='/tags', tags=["tags"])
 
