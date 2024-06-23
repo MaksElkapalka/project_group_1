@@ -10,6 +10,7 @@ from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.conf.config import config
+from src.conf import messages
 from src.database.db import get_db
 from src.repository import users as repository_users
 
@@ -153,7 +154,7 @@ class Auth:
 
         user = await self.get_current_active_user(token, db)
         if user.role != required_role:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.NOT_ENOUGH_PERMISSIONS)
         return user
 
     def create_email_token(self, data: dict):
