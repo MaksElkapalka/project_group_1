@@ -10,7 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.routes import auth, users, tags
+from src.routes import auth, users, tags, comments
 from src.conf.config import config
 # from src.image.images import upload
 
@@ -47,6 +47,7 @@ async def ban_ips(request: Request, call_next: Callable):
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
+app.include_router(comments.router, prefix="/api")
 # app.include_router(upload.router, prefix="/images", tags=["images"])
 
 
