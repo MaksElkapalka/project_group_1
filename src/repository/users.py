@@ -1,10 +1,11 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
 from src.entity.models import User
-from src.schemas.user import UserSchema, UserUpdate, UserRoleUpdate
+from src.schemas.user import UserSchema, UserUpdate
+from src.conf import messages
 
 
 async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
@@ -86,10 +87,6 @@ async def update_password(
 ) -> None:
     """
     The update_password function updates the password of a user.
-        Args:
-            user (User): The User object to update.
-            new_password (str): The new password for the User object.
-        Returns: None
 
     :param user: User: Pass in the user object that is being updated
     :param new_password: str: Pass in the new password for the user
@@ -105,6 +102,14 @@ async def update_password(
 async def update_user(
     user: User, user_update: UserUpdate, db: AsyncSession = Depends(get_db)
 ) -> None:
+    """
+    The update_user function updates the user's information.
+
+    :param user: User: Pass in the user object that is being updated
+    :param user_update: UserUpdate: Pass in the new data for the user
+    :param db: AsyncSession: Pass in the database session to the function
+    :return: The user object
+    """
     if user_update.username:
         user.username = user_update.username
     if user_update.email:
@@ -115,21 +120,43 @@ async def update_user(
 
 
 async def set_user_status(
-    username: str, set_status: bool, db: AsyncSession = Depends(get_db)
+    email: str, set_status: bool, db: AsyncSession = Depends(get_db)
 ) -> None:
-    user = await get_user_by_username(username, db)
-    if user:
-        user.is_active = set_status
-        await db.commit()
-        await db.refresh(user)
+    """
+    The set_user_status function updates the user's active status.
+
+    :param email: User's email to status updating
+    :param set_status: Bolean value to setting user's status
+    :param db: AsyncSession: Pass in the database session to the function
+    :return: The user object
+    """
+    user = await get_user_by_email(email, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=messages.USER_NOT_FOUND)
+    user.is_active = set_status
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 async def update_user_role(
-        user: User, update_role: UserRoleUpdate, db: AsyncSession = Depends(get_db)
+        email: str, update_role: str, db: AsyncSession = Depends(get_db)
 ) -> None:
-    if update_role.role:
-        user.role = update_role.role
+    """
+    The set_user_status function updates the user's active status.
+
+    :param email: User's email to role updating
+    :param update_role: Value to user's role updating
+    :param db: AsyncSession: Pass in the database session to the function
+    :return: The user object
+    """
+    user = await get_user_by_email(email, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=messages.USER_NOT_FOUND)
+    if update_role:
+        user.role = update_role
     await db.commit()
     await db.refresh(user)
     return user

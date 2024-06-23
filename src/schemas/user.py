@@ -16,10 +16,6 @@ class UserUpdate(BaseModel):
     email: Optional[str] = None
 
 
-class UserRoleUpdate(BaseModel):
-    role: str
-
-
 class UserPublicResponse(BaseModel):
     username: str
     email: EmailStr

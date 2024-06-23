@@ -225,3 +225,14 @@ class Auth:
 
 
 auth_service = Auth()
+
+
+def auth_decorator(required_role: str):
+    def decorator(func):
+        async def role_permissions(username: str, db: AsyncSession = Depends(get_db), token: str = Depends(auth_service.oauth2_scheme)):
+            user = await auth_service.get_current_active_user_with_role(
+                required_role, token, db
+            )
+            return await func(username, db, token)
+        return role_permissions
+    return decorator

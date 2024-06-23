@@ -14,9 +14,8 @@ from src.schemas.user import (
     UserResponse,
     UserUpdate,
     UserPublicResponse,
-    UserRoleUpdate,
 )
-from src.services.auth import auth_service
+from src.services.auth import auth_service, auth_decorator
 
 router = APIRouter(prefix="/users", tags=["users"])
 cloudinary.config(
@@ -27,22 +26,21 @@ cloudinary.config(
 )
 
 
-# TODO: треба з запиту витягувати токен а з нього витягувати імейл  та шукати користувача по імейлу бо в база можуть бути декілька користувачів з однаковим іменем
 @router.get(
-    "/profile/{username}",
+    "/profile/{email}",
     response_model=UserPublicResponse,
     dependencies=[Depends(RateLimiter(times=1, seconds=20))],
 )
-async def read_user_profile(username: str, db: AsyncSession = Depends(get_db)) -> User:
+async def read_user_profile(email: str, db: AsyncSession = Depends(get_db)) -> User:
     """
-    Get user profile by username
+    Get user profile by email
 
-    :param username: Username for the user
+    :param email: Email for the user
     :param db: AsyncSession: Pass the database session to the function
     :return: The user object
     """
 
-    user = await repositories_users.get_user_by_username(username, db)
+    user = await repositories_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
@@ -94,44 +92,47 @@ async def update_current_user(
     return user
 
 
-@router.put("/ban/{username}", response_model=UserResponse)
+@router.put("/ban/{email}", response_model=UserResponse)
+@auth_decorator("admin")
 async def bun_user(
-    username: str,
+    email: str,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(
-        lambda: auth_service.get_current_active_user_with_role("admin")
-    ),
-):
+    token: str = Depends(auth_service.oauth2_scheme)):
     """
-    Ban user by username, setting status for user inactive
+    Ban user by email, setting status for user inactive
 
-    :param username: Username of the user to ban
+    :param email: Email of the user to ban
     :param db: AsyncSession: Pass the database session to the function
-    :param admin: User: current user with admin role
+    :param token: Unique user's token
     : return: Banned user profile
     """
-    user = await repositories_users.set_user_status(username, False, db)
-    return user
+    try:
+        user = await repositories_users.set_user_status(email, False, db)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.put("/unban/{username}", response_model=UserResponse)
+@router.put("/unban/{email}", response_model=UserResponse)
+@auth_decorator("admin")
 async def unbun_user(
-    username: str,
+    email: str,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(
-        lambda: auth_service.get_current_active_user_with_role("admin")
-    ),
+    token: str = Depends(auth_service.oauth2_scheme)
 ):
     """
-    Unban user by username, setting status for user active
+    Unban user by email, setting status for user active
 
-    :param username: Username of the user to unban
+    :param email: Email of the user to unban
     :param db: AsyncSession: Pass the database session to the function
-    :param admin: User: current user with admin role
+    :param token: Unique user's token
     : return: Unbanned user profile
     """
-    user = await repositories_users.set_user_status(username, True, db)
-    return user
+    try:
+        user = await repositories_users.set_user_status(email, True, db)
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.patch(
@@ -167,21 +168,21 @@ async def avatar_user(
     return user
 
 
-@router.put("/role/{username}", response_model=UserResponse)
+@router.put("/role/{email}", response_model=UserResponse)
 async def set_role(
-    username: str,
-    update_role: UserRoleUpdate,
+    email: str,
+    update_role: str,
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(auth_service.get_current_active_user),
 ):
     """
     Set role for user
 
-    :param username: Username of the user to setting role
+    :param email: Email of the user to setting role
     :param update_role: UserRoleUpdate: Role to change for user
     :param db: AsyncSession: Pass the database session to the function
     :param admin: User: current user with admin role
     : return: Unbanned user profile
     """
-    user = await repositories_users.update_user_role(username, update_role, db)
+    user = await repositories_users.update_user_role(email, update_role, db)
     return user
