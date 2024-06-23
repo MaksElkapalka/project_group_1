@@ -13,6 +13,7 @@ from src.conf import messages
 router = APIRouter(prefix="/tags", tags=["tags"])
 
 
+
 @router.get("/", response_model=List[TagResponse])
 async def read_tags(
     skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
