@@ -6,6 +6,7 @@ from src.database.db import get_db
 from src.schemas.tag import TagSchema, TagResponse
 from src.repository import tags as repository_tags
 from src.entity.models import User
+from src.services.auth import auth_service
 
 router = APIRouter(prefix='/tags', tags=["tags"])
 
@@ -40,7 +41,7 @@ def remove_tag(tag_id: int, db: Session = Depends(get_db)):
     return tag
 
 @router.post("/add", response_model=TagResponse)
-def add_tag(photo_id: int, tag_name: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def add_tag(photo_id: int, tag_name: str, db: Session = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)):
     tag = repository_tags.add_tag(photo_id, tag_name, current_user.id, db)
     if tag is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Photo not found or does not belong to the user")

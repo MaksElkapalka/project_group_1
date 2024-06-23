@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from src.entity.models import Tag, Photo
+from src.entity.models import Tag, Image
 from src.schemas.tag import TagSchema
 
 def create_tag(body: TagSchema, db: Session) -> Tag:
