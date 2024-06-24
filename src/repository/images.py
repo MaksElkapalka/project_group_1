@@ -8,7 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from src.entity.models import Image, User
+from src.entity.models import Image, User, Role
 from src.conf.config import config
 from src.schemas.image import ImageUpdateSchema
 
