@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Path, status
 from sqlalchemy.ext.asyncio import AsyncSession
-import logging
+
 
 from src.database.db import get_db
 from src.schemas.tag import TagSchema, TagResponse
@@ -11,9 +11,6 @@ from src.entity.models import User
 from src.conf import messages
 
 router = APIRouter(prefix="/tags", tags=["tags"])
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 @router.get("/", response_model=List[TagResponse])
@@ -78,11 +75,9 @@ async def add_tag_for_image_handler(
     user: User = Depends(auth_service.get_current_user),
 ):
     tag = await repository_tags.add_tag_for_image(tag_name, image_id, user, db)
-
     if not tag:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Photo not found or does not belong to the user",
         )
-
     return tag

@@ -44,3 +44,17 @@ async def get_image(image_id: int, db: AsyncSession = Depends(get_db), user: Use
             detail=f"Image not found"
             )
     return result
+
+@router.delete("/{image_id}")
+async def delete_image_endpoint(
+    image_id: int, 
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(auth_service.get_current_user)
+):
+    deleted = await repository_images.delete_image(image_id, db, user)
+    if not deleted:
+        raise HTTPException(
+            status_code=403,
+            detail="You do not have permission to delete this image"
+        )
+    return {"message": "Image deleted successfully"}

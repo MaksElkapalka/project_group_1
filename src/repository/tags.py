@@ -47,6 +47,7 @@ async def remove_tag(tag_id: int, db: AsyncSession):
     return tag
 
 
+
 async def add_tag_for_image(
     tag_name: str, image_id: int, user: User, db: AsyncSession
 ) -> Optional[Tag]:
@@ -74,3 +75,4 @@ async def add_tag_for_image(
         return tag
 
     return None
+
