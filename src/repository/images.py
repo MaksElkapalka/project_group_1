@@ -91,3 +91,33 @@ async def get_image(image_id: int, db: AsyncSession, user: User):
     stmt = select(Image).filter_by(id=image_id, user=user)
     image = await db.execute(stmt)
     return image.scalar_one_or_none()
+
+
+async def delete_image(image_id: int, db: AsyncSession, user: User):
+    """
+    Deletes an image from Cloudinary and the database.
+
+    :param image_id: The ID of the image to delete.
+    :param db: The database session.
+    :return: True if deletion is successful, False otherwise.
+    """
+
+    # Retrieve the image from the database
+    stmt = select(Image).filter_by(id=image_id, user=user)
+    result = await db.execute(stmt)
+    image = result.scalar_one_or_none()
+
+    if image is None:
+        return False
+
+    # Check if the user has permission to delete the image
+    if user.role in [Role.admin, Role.moderator] or user.id == image.user_id:
+        # Delete the image from Cloudinary
+        cloudinary.uploader.destroy(image.public_id)
+        
+        # Delete the image from the database
+        db.delete(image)
+        await db.commit()
+        return True
+    else:
+        return False
