@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Path, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
 from src.database.db import get_db
 from src.schemas.tag import TagSchema, TagResponse
 from src.repository import tags as repository_tags
@@ -9,9 +10,7 @@ from src.services.auth import auth_service
 from src.entity.models import User
 from src.conf import messages
 
-
 router = APIRouter(prefix="/tags", tags=["tags"])
-
 
 
 @router.get("/", response_model=List[TagResponse])
@@ -47,7 +46,7 @@ async def update_tag(
     body: TagSchema, tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)
 ):
     tag = await repository_tags.update_tag(tag_id, body, db)
-    if tag is None:
+    if not tag:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=messages.TAG_NOT_FOUND
         )
@@ -64,15 +63,19 @@ async def remove_tag(tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db
     return tag
 
 
-@router.post("/add", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
-async def add_tag_for_image(
+@router.post(
+    "/add_tag_for_image",
+    response_model=TagResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def add_tag_for_image_handler(
     tag_name: str,
-    image_id: int = Path(ge=1),
+    image_id: int,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
     tag = await repository_tags.add_tag_for_image(tag_name, image_id, user, db)
-    if tag is None:
+    if not tag:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Photo not found or does not belong to the user",
