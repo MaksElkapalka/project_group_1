@@ -7,11 +7,6 @@ from src.entity.models import Comment
 
 class CommentCreate(BaseModel):
     name: str
-    image_id: int
-
-
-class CommentUpdate(BaseModel):
-    name: str
 
 
 class CommentResponse(BaseModel):

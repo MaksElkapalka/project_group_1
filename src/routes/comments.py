@@ -8,7 +8,6 @@ from src.entity.models import Comment, User
 from src.repository import comments as repositories_comments
 from src.schemas.comments import (
     CommentCreate,
-    CommentUpdate,
     CommentResponse,
 )
 from src.services.auth import auth_service, role_required
@@ -19,6 +18,7 @@ router = APIRouter(prefix="/comments", tags=["comments"])
 
 @router.post("/create", response_model=CommentResponse)
 async def create_comment(
+    image_id: int,
     comment: CommentCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_active_user)
@@ -31,16 +31,18 @@ async def create_comment(
     :param current_user: User: Comment's creator
     :return: A Comment object
     """
-    new_comment = await repositories_comments.create_comment(comment, db, current_user)
+    new_comment = await repositories_comments.create_comment(image_id, current_user, comment, db)
     return new_comment
 
 
-@router.put("/update/{comment_id}", response_model=CommentResponse)
+@router.put("/update/{comment_id}",
+            response_model=CommentResponse,
+            dependencies=[Depends(auth_service.get_current_active_user)]
+)
 async def update_comment(
     comment_id: int,
-    comment: CommentUpdate,
+    comment: CommentCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_active_user)
 ):
     """
     The create_comment function creates a new comment.
@@ -48,33 +50,27 @@ async def update_comment(
     :param comment_id: Existing comments id
     :param comment: CommentUpdate: Validate the request body for comment updating
     :param db: AsyncSession: Pass in the database session
-    :param current_user: User: Comment's creator
     :return: A Comment object
     """
-    new_comment = await repositories_comments.update_comment(comment_id, comment, current_user, db)
+    new_comment = await repositories_comments.update_comment(comment_id, comment, db)
     if new_comment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.COMMENT_NOT_FOUND)
     return new_comment
 
 
-@router.delete("/delete/{comment_id}",
-                response_model=CommentResponse,
-                dependencies=[Depends(role_required(["admin", "moderator"]))])
-def delete_comment(
+@router.delete("/delete/{comment_id}", dependencies=[Depends(role_required(["admin", "moderator"]))])
+async def delete_comment(
     comment_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_active_user)
 ):
     """
     The create_comment function creates a new comment.
 
     :param comment_id: Existing comments id
-    :param comment: CommentUpdate: Validate the request body for comment updating
     :param db: AsyncSession: Pass in the database session
-    :param current_user: User: Comment's creator
     :return: A Comment object
     """
-    new_comment = repositories_comments.delete_comment(comment_id, current_user, db)
+    new_comment = await repositories_comments.delete_comment(comment_id, db)
     if new_comment is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.COMMENT_NOT_FOUND)
-    return new_comment
+    return "Comment deleted successfully"
