@@ -2,6 +2,7 @@ from datetime import datetime
 
 import cloudinary
 import cloudinary.uploader
+import cloudinary.api
 # from sqlalchemy.orm import Session
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -95,7 +96,7 @@ async def get_image(image_id: int, db: AsyncSession, user: User):
     return image.scalar_one_or_none()
 
 
-async def delete_image(image_id: int, db: AsyncSession, user: User):
+async def delete_image(image_id, db: AsyncSession, user: User):
     """
     Deletes an image from Cloudinary and the database.
 
@@ -108,18 +109,22 @@ async def delete_image(image_id: int, db: AsyncSession, user: User):
     stmt = select(Image).filter_by(id=image_id, user=user)
     result = await db.execute(stmt)
     image = result.scalar_one_or_none()
-
+    print(image)
     if image is None:
         return False
 
     # Check if the user has permission to delete the image
     if user.role in [Role.admin, Role.moderator] or user.id == image.user_id:
         # Delete the image from Cloudinary
-        cloudinary.uploader.destroy(image.public_id)
+        parts = image.url.split('/')
+        public_id_with_format = parts[-1]  # останній елемент у шляху
+        public_id = public_id_with_format.split('.')[0]
+        cloudinary.uploader.destroy(public_id)
         
         # Delete the image from the database
-        db.delete(image)
+        await db.delete(image)
         await db.commit()
+        # await db.refresh()
         return True
     else:
         return False
