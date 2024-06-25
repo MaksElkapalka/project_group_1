@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, Path, status
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -35,10 +36,21 @@ async def read_tag(tag_name: str, db: AsyncSession = Depends(get_db)):
     return tag
 
 
-@router.post("/", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
-async def create_tag(body: TagSchema, db: AsyncSession = Depends(get_db)):
-    tag = await repository_tags.create_tag(body, db)
-    return tag
+"   НЕ ВИДАЛЯЙТЕ ЦЮ ФУНКЦІЮ"
+# @router.post("/", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
+# async def create_tag(body: TagSchema, db: AsyncSession = Depends(get_db)):
+#     tag = await repository_tags.create_tag(body, db)
+#     return tag
+
+
+@router.post("/", response_model=List[TagResponse], status_code=status.HTTP_201_CREATED)
+async def create_tags(body: TagSchema, db: AsyncSession = Depends(get_db)):
+    try:
+        tags = await repository_tags.create_tags(body, db)
+        return tags
+    except ValidationError as e:
+        print(e.json())  # Додатковий лог для відлагодження
+        raise HTTPException(status_code=422, detail=e.errors())
 
 
 @router.put("/delete/{tag_id}",
@@ -70,20 +82,21 @@ async def remove_tag(tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db
 
 
 @router.post(
-    "/add_tag_for_image",
-    response_model=TagResponse,
+    "/add_tags_for_image",
     status_code=status.HTTP_201_CREATED,
 )
-async def add_tag_for_image_handler(
-    tag_name: str,
+async def add_tags_for_image_route(
+    tags_list: TagSchema,
     image_id: int,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
-    tag = await repository_tags.add_tag_for_image(tag_name, image_id, user, db)
-    if not tag:
+    created_tags = await repository_tags.add_tags_for_image(
+        tags_list, image_id, user, db
+    )
+    if not created_tags:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Photo not found or does not belong to the user",
         )
-    return tag
+    return {"message": "Tags added successfully"}
