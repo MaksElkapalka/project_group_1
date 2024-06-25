@@ -11,7 +11,7 @@ from src.schemas.comments import (
     CommentUpdate,
     CommentResponse,
 )
-from src.services.auth import auth_service, auth_decorator
+from src.services.auth import auth_service, role_required
 
 
 router = APIRouter(prefix="/comments", tags=["comments"])
@@ -57,9 +57,10 @@ async def update_comment(
     return new_comment
 
 
-@router.delete("/delete/{comment_id}", response_model=CommentResponse)
+@router.delete("/delete/{comment_id}",
+                response_model=CommentResponse,
+                dependencies=[Depends(role_required(["admin", "moderator"]))])
 def delete_comment(
-
     comment_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_active_user)

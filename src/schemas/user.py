@@ -24,6 +24,11 @@ class UserPublicResponse(BaseModel):
     image_count: int
 
 
+class UserActiveResponse(BaseModel):
+    email: EmailStr
+    is_active: bool
+
+
 class UserResponse(BaseModel):
     id: int
     username: str

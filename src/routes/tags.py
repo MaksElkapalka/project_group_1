@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.db import get_db
 from src.schemas.tag import TagSchema, TagResponse
 from src.repository import tags as repository_tags
-from src.services.auth import auth_service
+from src.services.auth import auth_service, role_required
 from src.entity.models import User
 from src.conf import messages
 
@@ -41,7 +41,10 @@ async def create_tag(body: TagSchema, db: AsyncSession = Depends(get_db)):
     return tag
 
 
-@router.put("/{tag_id}", response_model=TagResponse)
+@router.put("/delete/{tag_id}",
+            response_model=TagResponse,
+            dependencies=[Depends(role_required(["admin", "moderator"]))]
+)
 async def update_tag(
     body: TagSchema, tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)
 ):
@@ -53,7 +56,10 @@ async def update_tag(
     return tag
 
 
-@router.delete("/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/delete/{tag_id}",
+                status_code=status.HTTP_204_NO_CONTENT,
+                dependencies=[Depends(role_required(["admin", "moderator"]))]
+)
 async def remove_tag(tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)):
     tag = await repository_tags.remove_tag(tag_id, db)
     if tag is None:
