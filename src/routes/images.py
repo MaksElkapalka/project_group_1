@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Q
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.entity.models import User
+from src.entity.models import User, Image
 from src.database.db import get_db
 from src.repository import images as repository_images
 from src.schemas.image import ImageSchema, ImageUpdateSchema, ImageResponse
