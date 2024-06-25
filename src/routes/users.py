@@ -8,14 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.conf.config import config
 from src.database.db import get_db
-from src.entity.models import User
+from src.entity.models import User, Role
 from src.repository import users as repositories_users
 from src.schemas.user import (
     UserResponse,
     UserUpdate,
     UserPublicResponse,
+    UserActiveResponse
 )
-from src.services.auth import auth_service, auth_decorator
+from src.services.auth import auth_service, role_required
 
 router = APIRouter(prefix="/users", tags=["users"])
 cloudinary.config(
@@ -92,18 +93,18 @@ async def update_current_user(
     return user
 
 
-@router.put("/ban/{email}", response_model=UserResponse)
-@auth_decorator("admin")
+@router.put("/ban/{email}",
+            response_model=UserActiveResponse,
+            dependencies=[Depends(role_required(["admin", "moderator"]))]
+)
 async def bun_user(
     email: str,
-    db: AsyncSession = Depends(get_db),
-    token: str = Depends(auth_service.oauth2_scheme)):
+    db: AsyncSession = Depends(get_db),):
     """
-    Ban user by email, setting status for user inactive
+    Ban user by email, setting status for user inactive, depends on user's role, should be admin.
 
     :param email: Email of the user to ban
     :param db: AsyncSession: Pass the database session to the function
-    :param token: Unique user's token
     : return: Banned user profile
     """
     try:
@@ -113,19 +114,19 @@ async def bun_user(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.put("/unban/{email}", response_model=UserResponse)
-@auth_decorator("admin")
+@router.put("/unban/{email}",
+            response_model=UserActiveResponse,
+            dependencies=[Depends(role_required(["admin", "moderator"]))]
+)
 async def unbun_user(
     email: str,
     db: AsyncSession = Depends(get_db),
-    token: str = Depends(auth_service.oauth2_scheme)
 ):
     """
-    Unban user by email, setting status for user active
+    Unban user by email, setting status for user active, depends on user's role, should be admin
 
     :param email: Email of the user to unban
     :param db: AsyncSession: Pass the database session to the function
-    :param token: Unique user's token
     : return: Unbanned user profile
     """
     try:
@@ -168,12 +169,11 @@ async def avatar_user(
     return user
 
 
-@router.put("/role/{email}", response_model=UserResponse)
+@router.put("/role/{email}", response_model=UserResponse, dependencies=[Depends(role_required("admin"))])
 async def set_role(
     email: str,
-    update_role: str,
-    db: AsyncSession = Depends(get_db),
-    admin: User = Depends(auth_service.get_current_active_user),
+    update_role: Role,
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Set role for user

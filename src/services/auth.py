@@ -140,20 +140,20 @@ class Auth:
         return user
 
     async def get_current_active_user_with_role(
-            self, required_role: str, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+            self, required_role: list, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
     ):
         """
         Get the current active user based on the access token and check their role.
 
         :param self: Represent the instance of a class
-        :param required_role: str: Required role for access
+        :param required_role: list: Required roles for access
         :param token: str: Pass the token to the function
         :param db: AsyncSession: Get the database connection
         :return: A user object
         """
 
         user = await self.get_current_active_user(token, db)
-        if user.role != required_role:
+        if user.role.name not in required_role:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.NOT_ENOUGH_PERMISSIONS)
         return user
 
@@ -228,12 +228,10 @@ class Auth:
 auth_service = Auth()
 
 
-def auth_decorator(required_role: str):
-    def decorator(func):
-        async def role_permissions(username: str, db: AsyncSession = Depends(get_db), token: str = Depends(auth_service.oauth2_scheme)):
-            user = await auth_service.get_current_active_user_with_role(
-                required_role, token, db
-            )
-            return await func(username, db, token)
-        return role_permissions
-    return decorator
+def role_required(required_role: list):
+    async def wrapper(token: str = Depends(auth_service.oauth2_scheme), db: AsyncSession = Depends(get_db)):
+        user = await auth_service.get_current_active_user_with_role(required_role, token, db)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.NOT_ENOUGH_PERMISSIONS)
+        return user
+    return wrapper

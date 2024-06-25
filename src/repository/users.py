@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.entity.models import User
+from src.entity.models import User, Role
 from src.schemas.user import UserSchema, UserUpdate
 from src.conf import messages
 
@@ -142,13 +142,13 @@ async def set_user_status(
 
 
 async def update_user_role(
-    email: str, update_role: str, db: AsyncSession = Depends(get_db)
+    email: str, update_role: Role, db: AsyncSession = Depends(get_db)
 ) -> None:
     """
     The set_user_status function updates the user's active status.
 
     :param email: User's email to role updating
-    :param update_role: Value to user's role updating
+    :param update_role: Role: Value to user's role updating
     :param db: AsyncSession: Pass in the database session to the function
     :return: The user object
     """
