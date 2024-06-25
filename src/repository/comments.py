@@ -3,9 +3,10 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.entity.models import Comment, User
-from src.schemas.comments import CommentCreate, CommentUpdate
+from src.entity.models import Comment, User, Image
+from src.schemas.comments import CommentCreate
 from src.conf import messages
+from src.repository.images import get_image
 
 
 async def get_comment(
@@ -27,17 +28,28 @@ async def get_comment(
 
 
 async def create_comment(
+        image_id: int,
         current_user: User,
         body: CommentCreate,
-        db: AsyncSession = Depends(get_db)):
+        db: AsyncSession = Depends(get_db)
+):
     """
     The create_comment function creates a new comment.
 
+    :param image_id: int: Image's id for comment it
+    :param current_user: User: Comment creator
     :param body: CommentCreate: Validate the request body
     :param db: AsyncSession: Pass in the database session
     :return: A Comment object
     """
-    new_comment = Comment(**body.dict(), user_id=current_user.id)
+    stmt = select(Image).filter_by(id=image_id)
+    image = await db.execute(stmt)
+    image = image.scalar_one_or_none()
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.IMAGE_NOT_FOUND)
+    new_comment = Comment(name=body.name,
+                        image_id=image.id,
+                        user_id=current_user.id)
     db.add(new_comment)
     await db.commit()
     await db.refresh(new_comment)
@@ -46,8 +58,7 @@ async def create_comment(
 
 async def update_comment(
     comment_id: int,
-    coment_update: CommentUpdate,
-    current_user: User,
+    coment_update: CommentCreate,
     db: AsyncSession = Depends(get_db)
 ) -> None:
     """
@@ -55,13 +66,10 @@ async def update_comment(
 
     :param comment_id: int: Pass in the comment object that is being updated
     :param coment_update: CommentUpdate: Pass in the new data for the comment updating
-    :param current_user: User: Comment creator
     :param db: AsyncSession: Pass in the database session to the function
     :return: The comment object
     """
-    stmt = select(Comment).filter_by(id=comment_id, user_id=current_user.id)
-    result = await db.execute(stmt)
-    comment = result.scalar_one_or_none()
+    comment = await get_comment(comment_id, db)
     if comment:
         comment.name = coment_update.name
         await db.commit()
@@ -71,20 +79,16 @@ async def update_comment(
 
 async def delete_comment(
     comment_id: int,
-    current_user: User,
     db: AsyncSession = Depends(get_db)
 ) -> None:
     """
     The remove_comment function removes comment from database.
 
     :param comment_id: int: Pass in the comment object that is being updated
-    :param current_user: User: Comment creator
     :param db: AsyncSession: Pass in the database session to the function
     :return: The comment object
     """
-    stmt = select(Comment).filter_by(id=comment_id, user_id=current_user.id)
-    result = await db.execute(stmt)
-    comment = result.scalar_one_or_none()
+    comment = await get_comment(comment_id, db)
     if comment:
         await db.delete(comment)
         await db.commit()
