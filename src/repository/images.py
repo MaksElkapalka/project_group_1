@@ -44,8 +44,10 @@ async def upload_image(file: UploadFile, description: str, db: AsyncSession, use
         updated_at=datetime.now()
     )
     db.add(image)
+    user.image_count += 1
     await db.commit()
     await db.refresh(image)
+    await db.refresh(user)
     return image
 
 async def update_image(image_id: int,
