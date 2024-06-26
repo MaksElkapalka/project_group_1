@@ -1,8 +1,13 @@
 from ipaddress import ip_address
+from contextlib import asynccontextmanager
 from typing import Callable
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi_limiter import FastAPILimiter
 import redis.asyncio as redis
 from sqlalchemy import text
@@ -15,7 +20,39 @@ from src.routes import auth, users, tags, images, comments
 from src.conf.config import config
 # from src.image.images import upload
 
-app = FastAPI()
+# app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Підключення до Redis
+    """
+    The lifespan function is a FastAPI lifecycle hook that runs before the app starts and after it stops.
+    
+    :param app: FastAPI: Pass the fastapi instance to the function
+    :return: A function
+    :doc-author: Trelent
+    """
+    r = await redis.Redis(
+        host=config.REDIS_DOMAIN,
+        port=config.REDIS_PORT,
+        db=0,
+        password=config.REDIS_PASSWORD,
+        encoding="utf-8",
+        decode_responses=True,
+    )
+    await FastAPILimiter.init(r)
+    app.state.redis = r
+    
+    # Yield управління життєвим циклом
+    yield
+
+    # Закриття підключення до Redis
+    await r.close()
+    app.state.redis = None
+
+# Ініціалізація FastAPI з контекстним менеджером lifespan
+app = FastAPI(lifespan=lifespan)
+
 
 banned_ips = [
     ip_address("192.168.1.1"),
@@ -44,36 +81,59 @@ async def ban_ips(request: Request, call_next: Callable):
     response = await call_next(request)
     return response
 
+BASE_DIR = Path(__file__).parent
+directory = BASE_DIR.joinpath("src").joinpath("static")
+
+app.mount("/static", StaticFiles(directory=directory), name="static")
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
+
+templates = Jinja2Templates(directory=BASE_DIR/"src"/"templates")
+
+
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    """
+    The index function is responsible for returning the index page of our website.
+        It does this by using a TemplateResponse object, which takes in two arguments:
+            1) The name of the template to be rendered (in this case, 'index.html')
+            2) A context dictionary containing any variables that need to be passed into the template
+    
+    :param request: Request: Get the request object
+    :return: A templateresponse object
+    :doc-author: Trelent
+    """
+    return templates.TemplateResponse('index.html', context={"request": request, "our": "Here was me! Mew was here!"})
+
+
 # app.include_router(upload.router, prefix="/images", tags=["images"])
 
 
-@app.on_event("startup")
-# TODO: розібратися з новим методом і переробити
-async def startup():
-    """
-    This function is an event handler that runs when the FastAPI application starts up.
-    It initializes a Redis connection and passes it to the FastAPILimiter for rate limiting.
+# @app.on_event("startup")
+# # TODO: розібратися з новим методом і переробити
+# async def startup():
+#     """
+#     This function is an event handler that runs when the FastAPI application starts up.
+#     It initializes a Redis connection and passes it to the FastAPILimiter for rate limiting.
 
-    :return: None
-    :raises: None
+#     :return: None
+#     :raises: None
 
-    :doc-author: Trelent
-    """
-    r = await redis.Redis(
-        host=config.REDIS_DOMAIN,
-        port=config.REDIS_PORT,
-        db=0,
-        password=config.REDIS_PASSWORD,
-        encoding="utf-8",
-        decode_responses=True,
-    )
-    await FastAPILimiter.init(r)
+#     :doc-author: Trelent
+#     """
+#     r = await redis.Redis(
+#         host=config.REDIS_DOMAIN,
+#         port=config.REDIS_PORT,
+#         db=0,
+#         password=config.REDIS_PASSWORD,
+#         encoding="utf-8",
+#         decode_responses=True,
+#     )
+#     await FastAPILimiter.init(r)
 
 
 @app.get("/api/healthchecker")
