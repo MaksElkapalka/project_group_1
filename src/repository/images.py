@@ -3,6 +3,7 @@ from datetime import datetime
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,34 +18,35 @@ from src.schemas.image import ImageUpdateSchema
 cloudinary.config(
     cloud_name=config.CLOUDINARY_NAME,
     api_key=config.CLOUDINARY_API_KEY,
-    api_secret=config.CLOUDINARY_API_SECRET
+    api_secret=config.CLOUDINARY_API_SECRET,
 )
 
 
 async def upload_image(
+
         file: UploadFile,
         description: str,
         db: AsyncSession,
         user: User):
     """
     Uploads an image to Cloudinary and saves the image URL and description to the database.
-    
+
     :param file: The image file to upload.
     :param description: The description of the image.
     :param user_id: The ID of the user uploading the image.
     :param db: The database session.
     :return: The image URL and description.
     """
-    
+
     result = await run_in_threadpool(cloudinary.uploader.upload, file)
     image_url = result.get("url")
-    
+
     image = Image(
         url=image_url,
         description=description,
         user_id=user.id,
         created_at=datetime.now(),
-        updated_at=datetime.now()
+        updated_at=datetime.now(),
     )
     db.add(image)
     user = await db.merge(user)
@@ -59,15 +61,17 @@ async def update_image(
         image_id: int,
         body: ImageUpdateSchema,  
         db: AsyncSession, 
+
 ):
     """
     Updates the description of an existing image in the database.
-    
+
     :param image_id: The ID of the image to update.
     :param body: The new description of the image.
     :param db: The database session.
     :return: The updated image information.
     """
+
     stmt = select(Image).options(joinedload(Image.comments)).options(joinedload(Image.tags)).filter_by(id=image_id)
     result = await db.execute(stmt)
     image = result.unique().scalar_one_or_none()
@@ -93,6 +97,7 @@ async def get_all_images(limit: int,
     stmt = select(Image).options(joinedload(Image.comments)).options(joinedload(Image.tags)).offset(offset).limit(limit)
     images = await db.execute(stmt)
     return images.unique().scalars().all()
+
 
 
 async def get_image(image_id: int, db: AsyncSession, user: User):
@@ -122,7 +127,6 @@ async def delete_image(image_id, db: AsyncSession):
     stmt = select(Image).filter_by(id=image_id)
     result = await db.execute(stmt)
     image = result.scalar_one_or_none()
-    
     stmt = select(User).filter_by(id=image.user_id)
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
@@ -140,3 +144,4 @@ async def delete_image(image_id, db: AsyncSession):
     await db.refresh(user)
     # await db.refresh()
     return image
+

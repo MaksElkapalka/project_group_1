@@ -26,7 +26,7 @@ async def upload_image_endpoint(
     file: UploadFile = File(...),
     description: str = Form(...),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(auth_service.get_current_user)
+    user: User = Depends(auth_service.get_current_user),
 ):
     result = await repository_images.upload_image(file.file, description, db, user)
     return result
@@ -51,8 +51,13 @@ async def get_all_images(limit: int = Query(10, ge=10, le=500), offset: int = Qu
     result = await repository_images.get_all_images(limit, offset, db)
     return result
 
+
 @router.get("/", response_model=ImageResponse)
-async def get_image(image_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(auth_service.get_current_user)):
+async def get_image(
+    image_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(auth_service.get_current_user),
+):
     result = await repository_images.get_image(image_id, db, user)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.IMAGE_NOT_FOUND)
@@ -63,10 +68,11 @@ async def get_image(image_id: int, db: AsyncSession = Depends(get_db), user: Use
                              Depends(role_required(["admin"]))]
 )
 async def delete_image_endpoint(
-    image_id: int, 
+    image_id: int,
     db: AsyncSession = Depends(get_db),
 ):
     image = await repository_images.delete_image(image_id, db)
     if image is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.IMAGE_NOT_FOUND)
     return {"message": "Image deleted successfully"}
+
