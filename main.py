@@ -22,12 +22,13 @@ from src.conf.config import config
 
 # app = FastAPI()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Підключення до Redis
     """
     The lifespan function is a FastAPI lifecycle hook that runs before the app starts and after it stops.
-    
+
     :param app: FastAPI: Pass the fastapi instance to the function
     :return: A function
     :doc-author: Trelent
@@ -42,13 +43,14 @@ async def lifespan(app: FastAPI):
     )
     await FastAPILimiter.init(r)
     app.state.redis = r
-    
+
     # Yield управління життєвим циклом
     yield
 
     # Закриття підключення до Redis
     await r.close()
     app.state.redis = None
+
 
 # Ініціалізація FastAPI з контекстним менеджером lifespan
 app = FastAPI(lifespan=lifespan)
@@ -81,6 +83,7 @@ async def ban_ips(request: Request, call_next: Callable):
     response = await call_next(request)
     return response
 
+
 BASE_DIR = Path(__file__).parent
 directory = BASE_DIR.joinpath("src").joinpath("static")
 
@@ -92,7 +95,7 @@ app.include_router(tags.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
 
-templates = Jinja2Templates(directory=BASE_DIR/"src"/"templates")
+templates = Jinja2Templates(directory=BASE_DIR / "src" / "templates")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -102,12 +105,14 @@ def index(request: Request):
         It does this by using a TemplateResponse object, which takes in two arguments:
             1) The name of the template to be rendered (in this case, 'index.html')
             2) A context dictionary containing any variables that need to be passed into the template
-    
+
     :param request: Request: Get the request object
     :return: A templateresponse object
     :doc-author: Trelent
     """
-    return templates.TemplateResponse('index.html', context={"request": request, "our": "Here was me! Mew was here!"})
+    return templates.TemplateResponse(
+        "index.html", context={"request": request, "our": "Here was me! Mew was here!"}
+    )
 
 
 # app.include_router(upload.router, prefix="/images", tags=["images"])
