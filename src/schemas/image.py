@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List 
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,3 +16,18 @@ class ImageResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class ImageEdit(BaseModel):
+    transformations: List[str]
+
+class ImageFilter(BaseModel):
+    filter_name: str
+
+class ImageResize(BaseModel):
+    width: int
+    height: int
+
+class ImageCrop(BaseModel):
+    width: int
+    height: int
+    x: int
+    y: int

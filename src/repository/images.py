@@ -8,12 +8,16 @@ from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from entity.models import Image
+from services.images import edit_image, apply_filter, resize_image, crop_image
 
 from src.entity.models import Image, User, Role
 from src.conf.config import config
 from src.schemas.image import ImageUpdateSchema
 
-
+import cloudinary.uploader
 
 
 cloudinary.config(
@@ -128,3 +132,40 @@ async def delete_image(image_id, db: AsyncSession, user: User):
         return True
     else:
         return False
+
+
+def edit_image_in_db(db: Session, image_id: int, transformations: list):
+    image = db.query(Image).filter(Image.id == image_id).first()
+    if image:
+        new_url = edit_image(image.url.split('/')[-1], transformations)
+        image.url = new_url
+        db.commit()
+        db.refresh(image)
+    return image
+
+def apply_filter_to_image(db: Session, image_id: int, filter_name: str):
+    image = db.query(Image).filter(Image.id == image_id).first()
+    if image:
+        new_url = apply_filter(image.url.split('/')[-1], filter_name)
+        image.url = new_url
+        db.commit()
+        db.refresh(image)
+    return image
+
+def resize_image_in_db(db: Session, image_id: int, width: int, height: int):
+    image = db.query(Image).filter(Image.id == image_id).first()
+    if image:
+        new_url = resize_image(image.url.split('/')[-1], width, height)
+        image.url = new_url
+        db.commit()
+        db.refresh(image)
+    return image
+
+def crop_image_in_db(db: Session, image_id: int, width: int, height: int, x: int, y: int):
+    image = db.query(Image).filter(Image.id == image_id).first()
+    if image:
+        new_url = crop_image(image.url.split('/')[-1], width, height, x, y)
+        image.url = new_url
+        db.commit()
+        db.refresh(image)
+    return image
