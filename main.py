@@ -26,12 +26,10 @@ from src.conf.config import config
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Підключення до Redis
-    """
-    The lifespan function is a FastAPI lifecycle hook that runs before the app starts and after it stops.
+    """The lifespan function is a FastAPI lifecycle hook that runs before the app starts and after it stops.
 
-    :param app: FastAPI: Pass the fastapi instance to the function
-    :return: A function
-    :doc-author: Trelent
+    Args:
+        app (FastAPI): FastAPI: Pass the fastapi instance to the function.
     """
     r = await redis.Redis(
         host=config.REDIS_DOMAIN,
@@ -100,15 +98,16 @@ templates = Jinja2Templates(directory=BASE_DIR / "src" / "templates")
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    """
-    The index function is responsible for returning the index page of our website.
+    """The index function is responsible for returning the index page of our website.
         It does this by using a TemplateResponse object, which takes in two arguments:
             1) The name of the template to be rendered (in this case, 'index.html')
             2) A context dictionary containing any variables that need to be passed into the template
 
-    :param request: Request: Get the request object
-    :return: A templateresponse object
-    :doc-author: Trelent
+    Args:
+        request (Request): Get the request object.
+
+    Returns:
+        Templateresponse: A templateresponse object
     """
     return templates.TemplateResponse(
         "index.html", context={"request": request, "our": "Here was me! Mew was here!"}
@@ -143,14 +142,15 @@ def index(request: Request):
 
 @app.get("/api/healthchecker")
 async def healthchecker(db: AsyncSession = Depends(get_db)):
-    """
-    The healthchecker function is a simple function that checks if the database connection is working.
+    """The healthchecker function is a simple function that checks if the database connection is working.
     It does this by making a request to the database and checking if it returns any results.
     If there are no results, then we know something went wrong with our connection.
 
-    :param db: AsyncSession: Pass the database session to the function
-    :return: A dict
-    :doc-author: Trelent
+    Args:
+        db (AsyncSession, optional): Pass the database session to the function.
+
+    Returns:
+        Dict: A dictionary with the message key.
     """
     try:
         # Make request

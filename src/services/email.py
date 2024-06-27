@@ -23,18 +23,15 @@ conf = ConnectionConfig(
 
 
 async def send_email(email: EmailStr, username: str, host: str) -> None:
-    """
-    The send_email function sends an email to the user with a link to verify their email address.
-        The function takes in three arguments:
-            -email: the user's email address, which is used as a unique identifier for each account.
-            -username: the username of the account that was just created. This is displayed on
-                verification page so that users know they are verifying their own accounts and not someone else's.
-            -host: this is used in conjunction with FastMail's template_body argument, which allows us to pass variables into our HTML templates.
+    """The send_email function sends an email to the user with a link to verify their email address.
+        
+    Args:
+        email (EmailStr): Specify the email address of the user.
+        username (str): Pass the username of the user to be sent in the email.
+        host (str): Pass the hostname of your server to the email template
 
-    :param email: EmailStr: Specify the email address of the user
-    :param username: str: Pass the username of the user to be sent in the email
-    :param host: str: Pass the hostname of your server to the email template
-    :return: None, so the return value of send_email is none
+    Returns:
+        None: None, so the return value of send_email is none
     """
     try:
         token_verification = auth_service.create_email_token({"sub": email})
@@ -56,18 +53,15 @@ async def send_email(email: EmailStr, username: str, host: str) -> None:
 
 
 async def send_reset_password_email(email: str, token: str, host: str):
-    """
-    The send_reset_password_email function sends a password reset email to the user.
+    """The send_reset_password_email function sends a password reset email to the user.
 
     Args:
         email (str): The user's email address.
         token (str): A unique token that will be used to verify the request is valid.
         host (str): The URL of your website, e.g., https://example.com/reset-password?token=abc123xyz789
-
-    :param email: str: Specify the email address of the user that is requesting a password reset
-    :param token: str: Pass the token to the template
-    :param host: str: Pass the hostname of the website to the template
-    :return: A coroutine
+    
+    Returns:
+        None: None.
     """
     try:
         message = MessageSchema(
