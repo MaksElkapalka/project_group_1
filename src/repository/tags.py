@@ -16,6 +16,15 @@ from src.schemas.tag import TagSchema
 
 
 async def create_tags(body: TagSchema, db: AsyncSession) -> List[Tag]:
+    """The create_tags function creates a new tags.
+
+    Args:
+        body (TagSchema): Validate the request body.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        List[Tag]: List of created tags.
+    """
     existing_tags_query = await db.execute(
         select(Tag).where(Tag.name.in_(body.tag_list))
     )
@@ -40,18 +49,47 @@ async def create_tags(body: TagSchema, db: AsyncSession) -> List[Tag]:
 
 
 async def get_tags(skip: int, limit: int, db: AsyncSession) -> List[Tag]:
+    """The get_tags function displays existing tags.
+
+    Args:
+        skip (int): The number of images to skip.
+        limit (int): The maximum number of images to return.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        List[Tag]: List of all tags
+    """
     stmt = select(Tag).offset(skip).limit(limit)
     tags = await db.execute(stmt)
     return tags.scalars().all()
 
 
 async def get_tag(tag_name: str, db: AsyncSession) -> Optional[Tag]:
+    """The get_tag function displays a tag by given name.
+
+    Args:
+        tag_name (str): Pass in the tag object in database.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        Optional[Tag]: Existing tag
+    """
     stmt = select(Tag).filter_by(name=tag_name)
     tag = await db.execute(stmt)
     return tag.scalar_one_or_none()
 
 
 async def update_tag(tag_id: int, body: TagSchema, db: AsyncSession):
+    """The update_tag function updates a tag.
+
+    Args:
+        tag_id (int): Pass in the tag object in database.
+        body (TagSchema): Validate the request body.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        Tag: Updated tag.
+    """
     stmt = select(Tag).filter_by(id=tag_id)
     result = await db.execute(stmt)
     tag = result.scalar_one_or_none()
@@ -63,6 +101,15 @@ async def update_tag(tag_id: int, body: TagSchema, db: AsyncSession):
 
 
 async def remove_tag(tag_id: int, db: AsyncSession):
+    """The remove_tag function removes a tag.
+
+    Args:
+        tag_id (int): Pass in the tag object in database.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        Tag: Removed tag
+    """
     stmt = select(Tag).filter_by(id=tag_id)
     result = await db.execute(stmt)
     tag = result.scalar_one_or_none()
@@ -75,6 +122,17 @@ async def remove_tag(tag_id: int, db: AsyncSession):
 async def add_tags_for_image(
     tags_data: TagSchema, image_id: int, user: User, db: AsyncSession
 ) -> Optional[List[Tag]]:
+    """The add_tags_for_image function adds tags to image.
+
+    Args:
+        tags_data (TagSchema): List of tags.
+        image_id (int): Pass in the image object in database.
+        user (User): Current user.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        Optional[List[Tag]]: List of tags.
+    """
     # Пошук зображення за ID, що належить користувачеві
     stmt = select(Image).filter_by(id=image_id, user_id=user.id)
     result = await db.execute(stmt)
