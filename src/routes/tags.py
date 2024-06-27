@@ -1,15 +1,15 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Depends, Path, status
+
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-from src.database.db import get_db
-from src.schemas.tag import TagSchema, TagResponse
-from src.repository import tags as repository_tags
-from src.services.auth import auth_service, role_required
-from src.entity.models import User
 from src.conf import messages
+from src.database.db import get_db
+from src.entity.models import User
+from src.repository import tags as repository_tags
+from src.schemas.tag import TagResponse, TagSchema
+from src.services.auth import auth_service, role_required
 
 router = APIRouter(prefix="/tags", tags=["tags"])
 
@@ -34,13 +34,6 @@ async def read_tag(tag_name: str, db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND, detail=messages.TAG_NOT_FOUND
         )
     return tag
-
-
-"   НЕ ВИДАЛЯЙТЕ ЦЮ ФУНКЦІЮ"
-# @router.post("/", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
-# async def create_tag(body: TagSchema, db: AsyncSession = Depends(get_db)):
-#     tag = await repository_tags.create_tag(body, db)
-#     return tag
 
 
 @router.post("/", response_model=List[TagResponse], status_code=status.HTTP_201_CREATED)
