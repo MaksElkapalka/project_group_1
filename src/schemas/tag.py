@@ -28,6 +28,10 @@ class TagUpdateSchema(BaseModel):
     name: Optional[str] = Field(None, max_length=50)
 
 
+class TagImage(BaseModel):
+    name: str
+
+
 class TagResponse(BaseModel):
     id: int
     name: str

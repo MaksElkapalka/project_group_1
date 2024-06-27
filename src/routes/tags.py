@@ -53,9 +53,10 @@ async def create_tags(body: TagSchema, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=422, detail=e.errors())
 
 
-@router.put("/delete/{tag_id}",
-            response_model=TagResponse,
-            dependencies=[Depends(role_required(["admin", "moderator"]))]
+@router.put(
+    "/delete/{tag_id}",
+    response_model=TagResponse,
+    dependencies=[Depends(role_required(["admin", "moderator"]))],
 )
 async def update_tag(
     body: TagSchema, tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)
@@ -68,9 +69,10 @@ async def update_tag(
     return tag
 
 
-@router.delete("/delete/{tag_id}",
-                status_code=status.HTTP_204_NO_CONTENT,
-                dependencies=[Depends(role_required(["admin", "moderator"]))]
+@router.delete(
+    "/delete/{tag_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(role_required(["admin", "moderator"]))],
 )
 async def remove_tag(tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)):
     tag = await repository_tags.remove_tag(tag_id, db)

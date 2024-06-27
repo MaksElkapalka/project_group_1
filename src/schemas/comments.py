@@ -9,6 +9,13 @@ class CommentCreate(BaseModel):
     name: str
 
 
+class CommentToImage(BaseModel):
+    name: str
+    created_at: datetime
+    updated_at: datetime
+    user_id: int
+
+
 class CommentResponse(BaseModel):
     id: int
     name: str
