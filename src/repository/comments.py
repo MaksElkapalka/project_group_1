@@ -13,13 +13,15 @@ async def get_comment(
         comment_id: int,
         db: AsyncSession = Depends(get_db)
 ) -> None:
-    """
-    The get_comment function returns a comment object from the database based on the comment's id provided.
+    """The get_comment function returns a comment object from the database based on the comment's id provided.
         If no comment is found, None is returned.
 
-    :param comment_id: int: Comment's id in database
-    :param db: AsyncSession: Pass in the database session
-    :return: A comment object
+    Args:
+        comment_id (int): Comment's id in database.
+        db (AsyncSession, optional): Pass in the database session.
+
+    Returns:
+        Comment: Existing comment
     """
     stmt = select(Comment).filter_by(id=comment_id)
     comment = await db.execute(stmt)
@@ -33,14 +35,16 @@ async def create_comment(
         body: CommentCreate,
         db: AsyncSession = Depends(get_db)
 ):
-    """
-    The create_comment function creates a new comment.
+    """The create_comment function creates a new comment.
 
-    :param image_id: int: Image's id for comment it
-    :param current_user: User: Comment creator
-    :param body: CommentCreate: Validate the request body
-    :param db: AsyncSession: Pass in the database session
-    :return: A Comment object
+    Args:
+        image_id (int): Image's id for comment it.
+        current_user (User): Comment creator.
+        body (CommentCreate): Validate the request body.
+        db (AsyncSession, optional): Pass in the database session.
+
+    Returns:
+        Comment: Created comment
     """
     stmt = select(Image).filter_by(id=image_id)
     image = await db.execute(stmt)
@@ -61,13 +65,15 @@ async def update_comment(
     coment_update: CommentCreate,
     db: AsyncSession = Depends(get_db)
 ) -> None:
-    """
-    The update_comment function updates the comments.
+    """The update_comment function updates the comments.
 
-    :param comment_id: int: Pass in the comment object that is being updated
-    :param coment_update: CommentUpdate: Pass in the new data for the comment updating
-    :param db: AsyncSession: Pass in the database session to the function
-    :return: The comment object
+    Args:
+        comment_id (int): Pass in the comment object that is being updated.
+        coment_update (CommentCreate): Pass in the new data for the comment updating.
+        db (AsyncSession, optional): Pass in the database session to the function.
+
+    Returns:
+        Comment: Updated comment.
     """
     comment = await get_comment(comment_id, db)
     if comment:
@@ -81,12 +87,14 @@ async def delete_comment(
     comment_id: int,
     db: AsyncSession = Depends(get_db)
 ) -> None:
-    """
-    The remove_comment function removes comment from database.
+    """The remove_comment function removes comment from database.
 
-    :param comment_id: int: Pass in the comment object that is being updated
-    :param db: AsyncSession: Pass in the database session to the function
-    :return: The comment object
+    Args:
+        comment_id (int): Pass in the comment object that is being updated.
+        db (AsyncSession, optional): Pass in the database session to the function.
+
+    Returns:
+        Comment: Deleted comment
     """
     comment = await get_comment(comment_id, db)
     if comment:
