@@ -1,8 +1,10 @@
 from datetime import datetime
 
+from cloudinary import CloudinaryImage
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import cloudinary.utils
 
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -10,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
-from src.entity.models import Image, User, Role
+from src.entity.models import Image, User
 from src.conf.config import config
 from src.schemas.image import ImageUpdateSchema
 
@@ -154,3 +156,38 @@ async def delete_image(image_id, db: AsyncSession):
     # await db.refresh()
     return image
 
+async  def save_transformed_image(image_url: str, image_description: str, user: User, db: AsyncSession):
+    image = Image(
+        url=image_url,
+        description=image_description,
+        user_id=user.id,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    db.add(image)
+    user = await db.merge(user)
+    user.image_count += 1
+    await db.commit()
+    await db.refresh(user)
+    await db.refresh(image)
+    return image
+
+async def get_transformed_url(image_url: str, transformations: dict, user: User, db: AsyncSession) -> str:
+    
+    parts = image_url.split('/')
+    public_id_with_format = parts[-1]
+    trans_descriptions = parts[-2]
+    transformed_url = CloudinaryImage(public_id_with_format).build_url(**transformations)
+    new_image = await save_transformed_image(transformed_url, trans_descriptions, user, db)
+    return new_image.url
+
+async def get_foravatar_url(image_url: str, transformations: dict, user: User, db: AsyncSession) -> str:
+    
+    parts = image_url.split('/')
+    public_id_with_format = parts[-1]
+    trans_descriptions = parts[-2]
+    transformed_url = CloudinaryImage(public_id_with_format).build_url(**transformations)
+    piesces = transformed_url.split('.')
+    new_image_url = '.'.join(piesces[:-1]) + '.png'
+    new_image = await save_transformed_image(new_image_url, trans_descriptions, user, db)
+    return new_image.url
