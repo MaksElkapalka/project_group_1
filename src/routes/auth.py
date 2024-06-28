@@ -51,15 +51,16 @@ async def signup(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    The signup function creates a new user in the database.
+    """The signup function creates a new user in the database.
 
-    :param body: UserSchema: Validate the request body
-    :param bt: BackgroundTasks: Add a task to the background tasks queue
-    :param request: Request: Get the base url of the server
-    :param db: AsyncSession: Create a database session
-    :param : Add a task to the background tasks queue
-    :return: A user object, but the email is not sent
+    Args:
+        body (UserSchema): Validate the request body.
+        bt (BackgroundTasks): Add a task to the background tasks queue.
+        request (Request): Get the base url of the server.
+        db (AsyncSession, optional): Create a database session.
+
+    Returns:
+        User: Created user.
     """
     exist_user = await repositories_users.get_user_by_email(body.email, db)
     if exist_user:
@@ -78,12 +79,14 @@ async def signup(
 async def login(
     body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
 ):
-    """
-    The login function is used to authenticate a user.
+    """The login function is used to authenticate a user.
 
-    :param body: OAuth2PasswordRequestForm: Get the username and password from the request body
-    :param db: AsyncSession: Get the database session
-    :return: This:
+    Args:
+        body (OAuth2PasswordRequestForm, optional): Get the username and password from the request body.
+        db (AsyncSession, optional): Get the database session
+
+    Returns:
+        Dict: User's access token and token type.
     """
     user = await repositories_users.get_user_by_email(body.username, db)
     if user is None:
@@ -106,15 +109,19 @@ async def login(
 
 @router.get("/confirmed_email/{token}")
 async def confirmed_email(token: str, db: AsyncSession = Depends(get_db)):
-    """
-    The confirmed_email function is used to confirm a user's email address.
+    """The confirmed_email function is used to confirm a user's email address.
         It takes in the token that was sent to the user's email and uses it to get their email address.
         Then, it gets the user from our database using their email address and checks if they exist. If not, an error is raised.
-        Next, we check if they have already confirmed their account by checking if 'confirmed' is True or False for them in our database (True means they have confirmed). If so, we return a message saying that their account has already been confirmed.
+        Next, we check if they have already confirmed their account by checking if 'confirmed' is 
+        True or False for them in our database (True means they have confirmed). 
+        If so, we return a message saying that their account has already been confirmed.
 
-    :param token: str: Get the token from the url
-    :param db: AsyncSession: Pass the database session to the function
-    :return: A dictionary
+    Args:
+        token (str): Get the token from the url.
+        db (AsyncSession, optional): Pass the database session to the function.
+
+    Returns:
+        Dict: Message that user is confirmed.
     """
     email = await auth_service.get_email_from_token(token)
     user = await repositories_users.get_user_by_email(email, db)
@@ -135,19 +142,20 @@ async def request_email(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    The request_email function is used to send an email to the user with a link
-    to confirm their account. The function takes in the body of the request, which
-    contains only one field: email. It then uses this information to query for a
-    user with that email address and if it finds one, sends them an email containing
-    a link they can use to confirm their account.
+    """The request_email function is used to send an email to the user with a link
+            to confirm their account. The function takes in the body of the request, which
+            contains only one field: email. It then uses this information to query for a
+            user with that email address and if it finds one, sends them an email containing
+            a link they can use to confirm their account.
 
-    :param body: RequestEmail: Validate the request body
-    :param background_tasks: BackgroundTasks: Add a task to the background tasks queue
-    :param request: Request: Get the base_url of the request
-    :param db: AsyncSession: Create a database session
-    :param : Get the email from the request body
-    :return: A dictionary with the message key
+    Args:
+        body (RequestEmail): Validate the request body.
+        background_tasks (BackgroundTasks): Add a task to the background tasks queue.
+        request (Request): Get the base_url of the request.
+        db (AsyncSession, optional): Create a database session.
+
+    Returns:
+        Dict: A dictionary with the message key.
     """
     user = await repositories_users.get_user_by_email(body.email, db)
 
@@ -166,16 +174,16 @@ async def request_password_reset(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    The request_password_reset function is used to request a password reset.
-    It takes an email address and sends a password reset link to that email address.
+    """The request_password_reset function is used to request a password reset.
+            It takes an email address and sends a password reset link to that email address.
 
+    Args:
+        email_request (ResetPasswordRequest): Get the email from the request body.
+        request (Request): Get the base url of the application.
+        db (AsyncSession, optional): Get the database session
 
-    :param email_request: ResetPasswordRequest: Get the email from the request body
-    :param request: Request: Get the base url of the application
-    :param db: AsyncSession: Get the database session
-    :param : Get the email address of the user who wants to reset their password
-    :return: A dictionary with a message
+    Returns:
+        Dict: A dictionary with a message.
     """
     email = email_request.email
     user = await repositories_users.get_user_by_email(email, db)
@@ -193,14 +201,18 @@ async def request_password_reset(
 async def reset_password_confirm(
     token: str, new_password: str = Form(...), db: AsyncSession = Depends(get_db)
 ):
-    """
-    The reset_password_confirm function is used to reset a user's password.
-        It takes in the token and new_password as parameters, and returns a message indicating that the password has been changed successfully.
+    """The reset_password_confirm function is used to reset a user's password.
+        It takes in the token and new_password as parameters, and returns a message 
+        indicating that the password has been changed successfully.
 
-    :param token: str: Pass the token to the function
-    :param new_password: str: Get the new password from the request body
-    :param db: AsyncSession: Get the database session
-    :return: A dict with a message
+
+    Args:
+        token (str): Pass the token to the function.
+        new_password (str, optional): Get the new password from the request body.
+        db (AsyncSession, optional): Get the database session.
+
+    Returns:
+        Dict: A dict with a message.
     """
     email = auth_service.verify_password_reset_token(token)
     if not email:
@@ -223,13 +235,15 @@ async def reset_password_confirm(
 
 @router.get("/password_reset/{token}", response_class=HTMLResponse)
 async def password_reset_form(request: Request, token: str):
-    """
-    The password_reset_form function is called when a user clicks on the link in their email.
-    It renders a page with an input field for the new password and a submit button.
+    """The password_reset_form function is called when a user clicks on the link in their email.
+        It renders a page with an input field for the new password and a submit button.
 
-    :param request: Request: Get the request object
-    :param token: str: Pass the token to the template
-    :return: A templateresponse object
+    Args:
+        request (Request): Get the request object.
+        token (str): Pass the token to the template.
+
+    Returns:
+        TemplateResponse: A templateresponse object
     """
     return templates.TemplateResponse(
         "password_reset_form.html", {"request": request, "token": token}
