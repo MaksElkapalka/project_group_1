@@ -18,9 +18,6 @@ from src.database.db import get_db
 
 from src.routes import auth, users, tags, images, comments
 from src.conf.config import config
-# from src.image.images import upload
-
-# app = FastAPI()
 
 
 @asynccontextmanager
@@ -112,32 +109,6 @@ def index(request: Request):
     return templates.TemplateResponse(
         "index.html", context={"request": request, "our": "Here was me! Mew was here!"}
     )
-
-
-# app.include_router(upload.router, prefix="/images", tags=["images"])
-
-
-# @app.on_event("startup")
-# # TODO: розібратися з новим методом і переробити
-# async def startup():
-#     """
-#     This function is an event handler that runs when the FastAPI application starts up.
-#     It initializes a Redis connection and passes it to the FastAPILimiter for rate limiting.
-
-#     :return: None
-#     :raises: None
-
-#     :doc-author: Trelent
-#     """
-#     r = await redis.Redis(
-#         host=config.REDIS_DOMAIN,
-#         port=config.REDIS_PORT,
-#         db=0,
-#         password=config.REDIS_PASSWORD,
-#         encoding="utf-8",
-#         decode_responses=True,
-#     )
-#     await FastAPILimiter.init(r)
 
 
 @app.get("/api/healthchecker")
