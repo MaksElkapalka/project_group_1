@@ -18,7 +18,7 @@ from src.repository import images as repository_images
 from src.schemas.image import ImageSchema, ImageUpdateSchema, ImageResponse, ImageCreate
 from src.services.auth import auth_service, role_required
 from src.conf import messages
-
+from src.services.qr import generate_qr_code
 router = APIRouter(prefix="/images", tags=["images"])
 
 @router.post("/upload/", response_model=ImageCreate, status_code=201)
@@ -41,6 +41,25 @@ async def upload_image(
     """
     result = await repository_images.upload_image(file.file, description, db, user)
     return result
+
+@router.post("/transform/{image_id}", response_model=ImageResponse)
+async def tnsform_image(
+    image_id: int,
+    transformation: str = Form(...),  
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(auth_service.get_current_user),
+):
+    image = await repository_images.get_image(image_id, db, user)
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.IMAGE_NOT_FOUND)
+    
+    transformed_url = repository_images.transform_image(image.url, transformation)
+    
+    qr_code = generate_qr_code(transformed_url)
+    
+    transformed_image = await repository_images.save_transformed_image(image_id, transformed_url, qr_code, db)
+    
+    return transformed_image
 
 @router.put("/update/{image_id}",
             response_model=ImageResponse,
