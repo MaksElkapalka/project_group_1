@@ -33,14 +33,15 @@ cloudinary.config(
     dependencies=[Depends(RateLimiter(times=1, seconds=20))],
 )
 async def read_user_profile(email: str, db: AsyncSession = Depends(get_db)) -> User:
-    """
-    Get user profile by email
+    """The  read_user_profile function displays the user profile by email.
 
-    :param email: Email for the user
-    :param db: AsyncSession: Pass the database session to the function
-    :return: The user object
-    """
+    Args:
+        email (str): Email for the user in database.
+        db (AsyncSession, optional): Pass the database session to the function.
 
+    Returns:
+        User: User.
+    """
     user = await repositories_users.get_user_by_email(email, db)
     if user is None:
         raise HTTPException(
@@ -57,13 +58,15 @@ async def read_user_profile(email: str, db: AsyncSession = Depends(get_db)) -> U
 async def get_current_user(
     user: User = Depends(auth_service.get_current_active_user),
 ) -> User:
-    """
-    The get_current_user function is a dependency that will be injected into the
+    """The get_current_user function is a dependency that will be injected into the
         get_current_user endpoint. It uses the auth_service to retrieve the current user,
         and returns it if found.
 
-    :param user: User: Get the current user
-    :return: The user object
+    Args:
+        user (User, optional): Get the current user.
+
+    Returns:
+        User: Current user.
     """
     return user
 
@@ -78,15 +81,17 @@ async def update_current_user(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_active_user),
 ) -> User:
-    """
-    The update_current_user function is a dependency that will be injected into the
+    """The update_current_user function is a dependency that will be injected into the
         update_current_user endpoint. It uses the auth_service to update the current user information,
         and returns it if found.
 
-    :param user_update: UserUpdate: Data for user's info updating
-    :param db: AsyncSession: Pass the database session to the function
-    :param current_user: User: Get the current user from the database
-    :return: The user object
+    Args:
+        user_update (UserUpdate): Validate the data for user's info updating
+        db (AsyncSession, optional): Pass the database session to the function.
+        current_user (User, optional): Get the current user from the database.
+
+    Returns:
+        User: Updated user.
     """
     current_user = await db.merge(current_user)
     user = await repositories_users.update_user(current_user, user_update, db)
@@ -95,17 +100,19 @@ async def update_current_user(
 
 @router.put("/ban/{email}",
             response_model=UserActiveResponse,
-            dependencies=[Depends(role_required(["admin", "moderator"]))]
+            dependencies=[Depends(role_required(["admin"]))]
 )
 async def bun_user(
     email: str,
-    db: AsyncSession = Depends(get_db),):
-    """
-    Ban user by email, setting status for user inactive, depends on user's role, should be admin.
+    db: AsyncSession = Depends(get_db)):
+    """The bun_user function sets the False active status for user by given email, depends on user's role, 'admin' required.
 
-    :param email: Email of the user to ban
-    :param db: AsyncSession: Pass the database session to the function
-    : return: Banned user profile
+    Args:
+        email (str): Email of the user to ban.
+        db (AsyncSession, optional): Pass the database session to the function.
+
+    Returns:
+        User: User with False active status.
     """
     try:
         user = await repositories_users.set_user_status(email, False, db)
@@ -116,18 +123,20 @@ async def bun_user(
 
 @router.put("/unban/{email}",
             response_model=UserActiveResponse,
-            dependencies=[Depends(role_required(["admin", "moderator"]))]
+            dependencies=[Depends(role_required(["admin"]))]
 )
 async def unbun_user(
     email: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Unban user by email, setting status for user active, depends on user's role, should be admin
+    """The unbun_user function sets the True active status for user by given email, depends on user's role, 'admin' required. 
 
-    :param email: Email of the user to unban
-    :param db: AsyncSession: Pass the database session to the function
-    : return: Unbanned user profile
+    Args:
+        email (str): Email of the user to unban.
+        db (AsyncSession, optional): Pass the database session to the function.
+
+    Returns:
+        User: User with True active status.
     """
     try:
         user = await repositories_users.set_user_status(email, True, db)
@@ -146,17 +155,18 @@ async def avatar_user(
     user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    The avatar_user function is used to upload a user's avatar image.
+    """The avatar_user function is used to upload a user's avatar image.
         The function takes in an UploadFile object, which contains the file that was uploaded by the user.
         It also takes in a User object, which is obtained from the auth_service module and represents the current logged-in user.
         Finally, it also accepts an AsyncSession object for interacting with our database.
 
-    :param file: UploadFile: Get the file from the request
-    :param user: User: Get the current user from the database
-    :param db: AsyncSession: Pass the database session to the function
-    :param : Get the current user from the database
-    :return: An object of type user
+    Args:
+        file (UploadFile, optional): Get the file from the request.
+        user (User, optional): Get the current user from the database.
+        db (AsyncSession, optional): Pass the database session to the function.
+
+    Returns:
+        User: An object of type user
     """
     public_id = f"restapp/{user.email}"
     res = cloudinary.uploader.upload(file.file, public_id=public_id, owerite=True)
@@ -175,14 +185,15 @@ async def set_role(
     update_role: Role,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Set role for user
+    """The set_role function updates the user's role in database.
 
-    :param email: Email of the user to setting role
-    :param update_role: UserRoleUpdate: Role to change for user
-    :param db: AsyncSession: Pass the database session to the function
-    :param admin: User: current user with admin role
-    : return: Unbanned user profile
+    Args:
+        email (str): Email of the user to setting role.
+        update_role (Role): Role to update for user.
+        db (AsyncSession, optional): Pass the database session to the function
+
+    Returns:
+        User: User with role updated.
     """
     user = await repositories_users.update_user_role(email, update_role, db)
     return user

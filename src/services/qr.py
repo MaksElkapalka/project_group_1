@@ -2,12 +2,15 @@ import qrcode
 from io import BytesIO
 from fastapi.responses import StreamingResponse
 
+
 def generate_qr_code(url: str) -> StreamingResponse:
-    """
-    Generate a QR code from a given URL.
-    
-    :param url: The URL to encode in the QR code.
-    :return: StreamingResponse containing the QR code image.
+    """The generate_qr_code function generates a QR code from the given data.
+
+    Args:
+        url (str): The data to encode in the QR code.
+
+    Returns:
+        StreamingResponse: Containing the QR code image.
     """
     qr = qrcode.QRCode(
         version=1,

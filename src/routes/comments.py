@@ -23,13 +23,16 @@ async def create_comment(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_active_user)
 ):
-    """
-    The create_comment function creates a new comment.
+    """The create_comment function creates a new comment.
 
-    :param comment: CommentCreate: Validate the request body
-    :param db: AsyncSession: Pass in the database session
-    :param current_user: User: Comment's creator
-    :return: A Comment object
+    Args:
+        image_id (int): Pass in the image object in database.
+        comment (CommentCreate): Validate the request body.
+        db (AsyncSession, optional): Pass in the database session.
+        current_user (User, optional): Comment's creator.
+
+    Returns:
+        Comment: Created comment.
     """
     new_comment = await repositories_comments.create_comment(image_id, current_user, comment, db)
     return new_comment
@@ -44,13 +47,15 @@ async def update_comment(
     comment: CommentCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    The create_comment function creates a new comment.
+    """The create_comment function creates a new comment.
 
-    :param comment_id: Existing comments id
-    :param comment: CommentUpdate: Validate the request body for comment updating
-    :param db: AsyncSession: Pass in the database session
-    :return: A Comment object
+    Args:
+        comment_id (int): Pass in the comment object in database.
+        comment (CommentCreate): Validate the request body for comment updating.
+        db (AsyncSession, optional): Pass in the database session.
+
+    Returns:
+        Comment: Updated comment.
     """
     new_comment = await repositories_comments.update_comment(comment_id, comment, db)
     if new_comment is None:
@@ -63,12 +68,14 @@ async def delete_comment(
     comment_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    The create_comment function creates a new comment.
+    """The create_comment function creates a new comment.
 
-    :param comment_id: Existing comments id
-    :param db: AsyncSession: Pass in the database session
-    :return: A Comment object
+    Args:
+        comment_id (int): Pass in the comment object in database.
+        db (AsyncSession, optional): Pass in the database session.
+
+    Returns:
+        Str: Confirmation message.
     """
     new_comment = await repositories_comments.delete_comment(comment_id, db)
     if new_comment is None:

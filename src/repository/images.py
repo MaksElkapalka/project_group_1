@@ -1,8 +1,10 @@
 from datetime import datetime
 
+from cloudinary import CloudinaryImage
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
+import cloudinary.utils
 
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
@@ -10,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
-from src.entity.models import Image, User, Role
+from src.entity.models import Image, User
 from src.conf.config import config
 from src.schemas.image import ImageUpdateSchema
 
@@ -28,16 +30,18 @@ async def upload_image(
         description: str,
         db: AsyncSession,
         user: User):
-    """
-    Uploads an image to Cloudinary and saves the image URL and description to the database.
+ 
+    """The upload_image function uploads an image to Cloudinary and saves the image URL and description to the database.
 
-    :param file: The image file to upload.
-    :param description: The description of the image.
-    :param user_id: The ID of the user uploading the image.
-    :param db: The database session.
-    :return: The image URL and description.
-    """
+    Args:
+        file (file): The image file to upload.
+        description (str): The description of the image.
+        user_id (int): The ID of the user uploading the image.
+        db (AsyncSession, optional): Pass in the database session.
 
+    Returns:
+        Image: Uploaded image
+    """
     result = await run_in_threadpool(cloudinary.uploader.upload, file)
     image_url = result.get("url")
 
@@ -63,15 +67,16 @@ async def update_image(
         db: AsyncSession, 
 
 ):
-    """
-    Updates the description of an existing image in the database.
+    """The update_image function updates the description of an existing image in the database.
 
-    :param image_id: The ID of the image to update.
-    :param body: The new description of the image.
-    :param db: The database session.
-    :return: The updated image information.
-    """
+    Args:
+        image_id (int): Pass in the image object that is being updated.
+        body (ImageUpdateSchema): The new description of the image.
+        db (AsyncSession): Pass in the database session.
 
+    Returns:
+        Image: Updated image
+    """
     stmt = select(Image).options(joinedload(Image.comments)).options(joinedload(Image.tags)).filter_by(id=image_id)
     result = await db.execute(stmt)
     image = result.unique().scalar_one_or_none()
@@ -86,28 +91,31 @@ async def update_image(
 async def get_all_images(limit: int, 
                          offset: int,
                          db: AsyncSession):
-    """
-    The function get_all_images displays a list of images with specified pagination parameters.
+    """ The get_all_images function displays a list of images with specified pagination parameters.
 
-    :param skip: int: The number of images to skip.
-    :param limit: int: The maximum number of images to return.
-    :param db: AsyncSession: The database session.
-    :return: A list of image objects.
+    Args:
+        limit (int): The maximum number of images to return.
+        offset (int): Skips the offset rows before beginning to return the rows.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        List: List of image objects.
     """
     stmt = select(Image).options(joinedload(Image.comments)).options(joinedload(Image.tags)).offset(offset).limit(limit)
     images = await db.execute(stmt)
     return images.unique().scalars().all()
 
 
-
 async def get_image(image_id: int, db: AsyncSession, user: User):
-    """
-    The function get_image displays specific user's image.
+    """The get_image function displays specific user's image.
 
-    :param image_id: int: The id of the image to display.
-    :param db: AsyncSession: The database session.
-    :param user: User: Specific user
-    :return: A image object.
+    Args:
+        image_id (int): Pass in the image object in database.
+        db (AsyncSession): Pass in the database session.
+        user (User): Specific user.
+
+    Returns:
+        Image: Image
     """
     stmt = select(Image).options(joinedload(Image.comments)).options(joinedload(Image.tags)).filter_by(id=image_id, user=user)
     image = await db.execute(stmt)
@@ -115,12 +123,15 @@ async def get_image(image_id: int, db: AsyncSession, user: User):
 
 
 async def delete_image(image_id, db: AsyncSession):
-    """
-    Deletes an image from Cloudinary and the database.
 
-    :param image_id: The ID of the image to delete.
-    :param db: The database session.
-    :return: A image object
+    """The delete_image  function deletes an image from Cloudinary and the database.
+
+    Args:
+        image_id (int): Pass in the image object in database.
+        db (AsyncSession): Pass in the database session.
+
+    Returns:
+        Image: Deleted image
     """
 
     # Retrieve the image from the database
@@ -145,3 +156,38 @@ async def delete_image(image_id, db: AsyncSession):
     # await db.refresh()
     return image
 
+async  def save_transformed_image(image_url: str, image_description: str, user: User, db: AsyncSession):
+    image = Image(
+        url=image_url,
+        description=image_description,
+        user_id=user.id,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    db.add(image)
+    user = await db.merge(user)
+    user.image_count += 1
+    await db.commit()
+    await db.refresh(user)
+    await db.refresh(image)
+    return image
+
+async def get_transformed_url(image_url: str, transformations: dict, user: User, db: AsyncSession) -> str:
+    
+    parts = image_url.split('/')
+    public_id_with_format = parts[-1]
+    trans_descriptions = parts[-2]
+    transformed_url = CloudinaryImage(public_id_with_format).build_url(**transformations)
+    new_image = await save_transformed_image(transformed_url, trans_descriptions, user, db)
+    return new_image.url
+
+async def get_foravatar_url(image_url: str, transformations: dict, user: User, db: AsyncSession) -> str:
+    
+    parts = image_url.split('/')
+    public_id_with_format = parts[-1]
+    trans_descriptions = parts[-2]
+    transformed_url = CloudinaryImage(public_id_with_format).build_url(**transformations)
+    piesces = transformed_url.split('.')
+    new_image_url = '.'.join(piesces[:-1]) + '.png'
+    new_image = await save_transformed_image(new_image_url, trans_descriptions, user, db)
+    return new_image.url
