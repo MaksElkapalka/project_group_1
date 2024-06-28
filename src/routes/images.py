@@ -9,15 +9,15 @@ from fastapi import (
     HTTPException,
     Query,
     status)
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.entity.models import User, Image
+from src.entity.models import User
 from src.database.db import get_db
 from src.repository import images as repository_images
-from src.schemas.image import ImageSchema, ImageUpdateSchema, ImageResponse, ImageCreate
+from src.schemas.image import ImageUpdateSchema, ImageResponse, ImageCreate, Transformation, ImageUrlSchema, Roundformation
 from src.services.auth import auth_service, role_required
 from src.conf import messages
+
 
 router = APIRouter(prefix="/images", tags=["images"])
 
@@ -76,3 +76,20 @@ async def delete_image_endpoint(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=messages.IMAGE_NOT_FOUND)
     return {"message": "Image deleted successfully"}
 
+@router.post("/transform")
+async def transform_image_endpoint(image: ImageUrlSchema, 
+                                   transformation: Transformation, 
+                                   user: User = Depends(auth_service.get_current_user),
+                                   db: AsyncSession = Depends(get_db)):
+    transformations = transformation.model_dump()
+    transformed_url = await repository_images.get_transformed_url(image.url, transformations, user, db)
+    return {"transformed_url": transformed_url}
+
+@router.post("/transform/avatar")
+async def transform_image_for_avatar(image: ImageUrlSchema, 
+                                   transformation: Roundformation, 
+                                   user: User = Depends(auth_service.get_current_user),
+                                   db: AsyncSession = Depends(get_db)):
+    transformations = transformation.model_dump()
+    transformed_url = await repository_images.get_foravatar_url(image.url, transformations, user, db)
+    return {"transformed_url": transformed_url}

@@ -68,7 +68,7 @@ class Auth:
         """
         to_encode = data.copy()
         expire = datetime.utcnow() + (
-            expires_delta if expires_delta else timedelta(minutes=15)
+            expires_delta if expires_delta else timedelta(minutes=120)
         )
         to_encode.update(
             {"iat": datetime.utcnow(), "exp": expire, "scope": "access_token"}
