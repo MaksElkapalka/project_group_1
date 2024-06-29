@@ -11,6 +11,7 @@ class ImageSchema(BaseModel):
     url: str
     description: str
 
+
 class ImageUrlSchema(BaseModel):
     url: str
 
@@ -31,6 +32,7 @@ class ImageResponse(BaseModel):
     comments: Optional[List[CommentToImage]] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class CropEnum(str, Enum):
     thumb = "thumb"
