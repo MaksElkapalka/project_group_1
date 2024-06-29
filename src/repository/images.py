@@ -182,9 +182,10 @@ async def save_transformed_image(
 
 
 async def get_transformed_url(
-    image_url: str, transformations: dict, user: User, db: AsyncSession
+    image_id: int, transformations: dict, user: User, db: AsyncSession
 ) -> str:
-    parts = image_url.split("/")
+    image = await get_image(image_id, db, user)
+    parts = image.url.split("/")
     public_id_with_format = parts[-1]
     trans_descriptions = parts[-2]
     transformed_url = CloudinaryImage(public_id_with_format).build_url(
@@ -197,9 +198,10 @@ async def get_transformed_url(
 
 
 async def get_foravatar_url(
-    image_url: str, transformations: dict, user: User, db: AsyncSession
+    image_id: int, transformations: dict, user: User, db: AsyncSession
 ) -> str:
-    parts = image_url.split("/")
+    image = await get_image(image_id, db, user)
+    parts = image.url.split("/")
     public_id_with_format = parts[-1]
     trans_descriptions = parts[-2]
     transformed_url = CloudinaryImage(public_id_with_format).build_url(
