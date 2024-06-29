@@ -2,10 +2,10 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.db import get_db
-from src.entity.models import User, Role
-from src.schemas.user import UserSchema, UserUpdate
 from src.conf import messages
+from src.database.db import get_db
+from src.entity.models import Role, User
+from src.schemas.user import UserSchema, UserUpdate
 
 
 async def get_user_by_email(email: str, db: AsyncSession = Depends(get_db)):
