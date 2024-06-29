@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.entity.models import Image, Tag, User, image_tag_table
-from src.schemas.tag import TagSchema
+from src.schemas.tag import TagSchema, TagUpdateSchema
 
 
 async def create_tags(body: TagSchema, db: AsyncSession) -> List[Tag]:
@@ -73,7 +73,7 @@ async def get_tag(tag_name: str, db: AsyncSession) -> Optional[Tag]:
     return tag.scalar_one_or_none()
 
 
-async def update_tag(tag_id: int, body: TagSchema, db: AsyncSession):
+async def update_tag(tag_id: int, body: TagUpdateSchema, db: AsyncSession):
     """The update_tag function updates a tag.
 
     Args:
