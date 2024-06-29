@@ -39,18 +39,11 @@ class TestAsyncUsers(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_get_user_by_email(self):
-        user = User(
-            id=1,
-            username="test_user",
-            email="test_user@example.com",
-            password="123456",
-            confirmed=False,
-        )
         mocked_user = MagicMock()
-        mocked_user.scalar_one_or_none.return_value = user
+        mocked_user.scalar_one_or_none.return_value = self.user
         self.session.execute.return_value = mocked_user
         result = await get_user_by_email("test_email_1@example.com", self.session)
-        self.assertEqual(result, user)
+        self.assertEqual(result, self.user)
 
     async def test_get_user_by_username_found(self):
         mocked_user = MagicMock()
