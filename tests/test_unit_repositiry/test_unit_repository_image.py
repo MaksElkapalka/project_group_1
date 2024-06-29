@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -141,28 +142,50 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(saved_image.description, image_description)
         self.assertEqual(saved_image.user_id, self.user.id)
 
+    @pytest.mark.asyncio
     @patch("cloudinary.CloudinaryImage.build_url")
     async def test_get_transformed_url(self, mock_build_url):
         mock_build_url.return_value = "http://example.com/transformed_image.jpg"
 
-        result = await get_transformed_url(
-            "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
-        )
+        async def mock_get_image(image_id, db, user):
+            mock_image = MagicMock()
+            mock_image.url = "http://example.com/image.jpg"
+            return mock_image
 
-        self.assertEqual(result, "http://example.com/transformed_image.jpg")
+        with patch("src.repository.images.get_image", side_effect=mock_get_image):
+            result = await get_transformed_url(
+                image_id=1,
+                transformations={"crop": "fill"},
+                user=self.user,
+                db=self.session,
+            )
+
+        expected_url = "http://example.com/transformed_image.jpg"
+        assert result == expected_url
         self.session.add.assert_called()
         self.session.commit.assert_called_once()
         self.session.refresh.assert_called()
 
+    @pytest.mark.asyncio
     @patch("cloudinary.CloudinaryImage.build_url")
     async def test_get_foravatar_url(self, mock_build_url):
-        mock_build_url.return_value = "http://example.com/transformed_image.png"
+        mock_build_url.return_value = "http://example.com/transformed_image.jpg"
 
-        result = await get_foravatar_url(
-            "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
-        )
+        async def mock_get_image(image_id, db, user):
+            mock_image = MagicMock()
+            mock_image.url = "http://example.com/image.jpg"
+            return mock_image
 
-        self.assertEqual(result, "http://example.com/transformed_image.png")
+        with patch("src.repository.images.get_image", side_effect=mock_get_image):
+            result = await get_foravatar_url(
+                image_id=1,
+                transformations={"crop": "fill"},
+                user=self.user,
+                db=self.session,
+            )
+
+        expected_url = "http://example.com/transformed_image.png"
+        self.assertEqual(result, expected_url)
         self.session.add.assert_called()
         self.session.commit.assert_called_once()
         self.session.refresh.assert_called()
