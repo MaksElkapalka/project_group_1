@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.entity.models import User
 from src.database.db import get_db
 from src.repository import images as repository_images
-from src.schemas.image import ImageUpdateSchema, ImageResponse, ImageCreate, Transformation, ImageUrlSchema, Roundformation
+from src.schemas.image import ImageUpdateSchema, ImageResponse, ImageCreate, Transformation, Roundformation
 from src.services.auth import auth_service, role_required
 from src.conf import messages
 from src.repository.qr import generate_qr_code, generate_qr_code_with_url
@@ -130,26 +130,27 @@ async def delete_image(
 # TODO: Написати функцію, яка дає QR для будь-якого зображення
 
 @router.get('/qr_code')
-async def get_qr_code(image_url: str):
-    qr_code = generate_qr_code(image_url)
+async def get_qr_code(image_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(auth_service.get_current_user)):
+    image = await repository_images.get_image(image_id, db, user)
+    qr_code = generate_qr_code_with_url(image.url)
     return qr_code
 
 @router.post("/transform")
-async def transform_image_endpoint(image: ImageUrlSchema, 
+async def transform_image_endpoint(image_id: int, 
                                    transformation: Transformation, 
                                    user: User = Depends(auth_service.get_current_user),
                                    db: AsyncSession = Depends(get_db)):
     transformations = transformation.model_dump()
-    transformed_url = await repository_images.get_transformed_url(image.url, transformations, user, db)
+    transformed_url = await repository_images.get_transformed_url(image_id, transformations, user, db)
     qr_code = generate_qr_code_with_url(transformed_url)
     return qr_code
 
 @router.post("/transform/avatar")
-async def transform_image_for_avatar(image: ImageUrlSchema, 
+async def transform_image_for_avatar(image_id: int, 
                                    transformation: Roundformation, 
                                    user: User = Depends(auth_service.get_current_user),
                                    db: AsyncSession = Depends(get_db)):
     transformations = transformation.model_dump()
-    transformed_url = await repository_images.get_foravatar_url(image.url, transformations, user, db)
-    qr_code = generate_qr_code(transformed_url)
+    transformed_url = await repository_images.get_foravatar_url(image_id, transformations, user, db)
+    qr_code = generate_qr_code_with_url(transformed_url)
     return qr_code
