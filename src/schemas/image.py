@@ -1,6 +1,6 @@
 from enum import Enum
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 from src.schemas.comments import CommentToImage
@@ -10,10 +10,6 @@ from src.schemas.tag import TagImage
 class ImageSchema(BaseModel):
     url: str
     description: str
-
-
-class ImageUrlSchema(BaseModel):
-    url: str
 
 class ImageCreate(BaseModel):
     url: str
