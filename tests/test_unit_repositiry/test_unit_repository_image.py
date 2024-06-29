@@ -1,21 +1,22 @@
 import unittest
-from unittest.mock import MagicMock, AsyncMock, patch
-from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
 from fastapi import UploadFile
-from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.entity.models import Image, User
-from src.schemas.image import ImageUpdateSchema
 from src.repository.images import (
-    upload_image,
-    update_image,
-    get_all_images,
-    get_image,
     delete_image,
-    get_transformed_url,
+    get_all_images,
     get_foravatar_url,
+    get_image,
+    get_transformed_url,
+    save_transformed_image,
+    update_image,
+    upload_image,
 )
+from src.schemas.image import ImageUpdateSchema
 
 
 class TestImageRepository(unittest.IsolatedAsyncioTestCase):
@@ -30,6 +31,14 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
             avatar="example.com/avatar.png",
             role=1,
             image_count=0,
+        )
+        self.image = Image(
+            id=1,
+            description="Test Image",
+            url="http://example.com/image.jpg",
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+            user_id=self.user.id,
         )
 
     @patch("cloudinary.uploader.upload")
@@ -60,13 +69,13 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
             description="Old Description",
             created_at=datetime.now(),
             updated_at=datetime.now(),
+            user_id=self.user.id,
         )
 
         # Створення асинхронного мока для результату запиту
-        mocked_image = MagicMock()
-        mocked_image.unique.return_value.scalar_one_or_none = MagicMock()
-        mocked_image.scalar_one_or_none.return_value = body
-        self.session.execute.return_value = mocked_image
+        mocked_image_result = MagicMock()
+        mocked_image_result.unique.return_value.scalar_one_or_none.return_value = image
+        self.session.execute.return_value = mocked_image_result
 
         updated_image = await update_image(image_id=1, body=body, db=self.session)
 
@@ -110,52 +119,61 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
 
     @patch("cloudinary.uploader.destroy")
     async def test_delete_image(self, mock_destroy):
-        images = [
-            Image(
-                id=i,
-                description=f"Image {i}",
-                created_at=datetime.now(),
-                updated_at=datetime.now(),
-            )
-            for i in range(1, 6)
-        ]
-        print(len(images))
-        self.session.execute.side_effect = [
-            MagicMock(return_value=images),
-            MagicMock(return_value=self.user),
-        ]
+        mocked_image_result = MagicMock()
+        mocked_image_result.scalar_one_or_none.return_value = self.image
+        mocked_user_result = MagicMock()
+        mocked_user_result.scalar_one_or_none.return_value = self.user
+        self.session.execute.side_effect = [mocked_image_result, mocked_user_result]
         mock_destroy.return_value = {"result": "ok"}
+
         deleted_image = await delete_image(image_id=1, db=self.session)
-        mock_destroy.assert_called_once()
-        self.assertEqual(len(deleted_image), len(images))
+
+        mock_destroy.assert_called_once_with("image")
+        self.session.delete.assert_called_once_with(self.image)
         self.session.commit.assert_called_once()
-        self.session.refresh.assert_called_once_with(self.user)
+        self.assertEqual(deleted_image, self.image)
 
-    # @patch("cloudinary.CloudinaryImage.build_url")
-    # async def test_get_transformed_url(self, mock_build_url):
-    #     mock_build_url.return_value = "http://example.com/transformed_image.jpg"
+    async def test_save_transformed_image(self):
+        image_url = "http://example.com/transformed_image.jpg"
+        image_description = "Transformed Image"
+        saved_image = await save_transformed_image(
+            image_url=image_url,
+            image_description=image_description,
+            user=self.user,
+            db=self.session,
+        )
+        self.session.add.assert_called_once()
+        self.session.commit.assert_called_once()
+        self.session.refresh.assert_called()
+        self.assertEqual(saved_image.url, image_url)
+        self.assertEqual(saved_image.description, image_description)
+        self.assertEqual(saved_image.user_id, self.user.id)
 
-    #     result = await get_transformed_url(
-    #         "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
-    #     )
+    @patch("cloudinary.CloudinaryImage.build_url")
+    async def test_get_transformed_url(self, mock_build_url):
+        mock_build_url.return_value = "http://example.com/transformed_image.jpg"
 
-    #     self.assertEqual(result, "http://example.com/transformed_image.jpg")
-    #     self.session.add.assert_called()
-    #     self.session.commit.assert_called_once()
-    #     self.session.refresh.assert_called()
+        result = await get_transformed_url(
+            "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
+        )
 
-    # @patch("cloudinary.CloudinaryImage.build_url")
-    # async def test_get_foravatar_url(self, mock_build_url):
-    #     mock_build_url.return_value = "http://example.com/transformed_image.png"
+        self.assertEqual(result, "http://example.com/transformed_image.jpg")
+        self.session.add.assert_called()
+        self.session.commit.assert_called_once()
+        self.session.refresh.assert_called()
 
-    #     result = await get_foravatar_url(
-    #         "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
-    #     )
+    @patch("cloudinary.CloudinaryImage.build_url")
+    async def test_get_foravatar_url(self, mock_build_url):
+        mock_build_url.return_value = "http://example.com/transformed_image.png"
 
-    #     self.assertEqual(result, "http://example.com/transformed_image.png")
-    #     self.session.add.assert_called()
-    #     self.session.commit.assert_called_once()
-    #     self.session.refresh.assert_called()
+        result = await get_foravatar_url(
+            "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
+        )
+
+        self.assertEqual(result, "http://example.com/transformed_image.png")
+        self.session.add.assert_called()
+        self.session.commit.assert_called_once()
+        self.session.refresh.assert_called()
 
 
 if __name__ == "__main__":
