@@ -265,19 +265,24 @@ def role_required(required_role: list):
 
     return wrapper
 
+
 def image_owner_or_admin():
     async def wrapper(
         image_id: int,
         current_user: User = Depends(auth_service.get_current_active_user),
-        db: AsyncSession = Depends(get_db)
+        db: AsyncSession = Depends(get_db),
     ):
         image = await get_image(image_id, db, current_user)
         if image is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
-        
-        if current_user.id != image.user_id and current_user.role.name != "admin":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
-        
-        return current_user
-    return wrapper
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Image not found"
+            )
 
+        if current_user.id != image.user_id and current_user.role.name != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+            )
+
+        return current_user
+
+    return wrapper
