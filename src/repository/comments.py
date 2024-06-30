@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.conf import messages
 from src.database.db import get_db
 from src.entity.models import Comment, Image, User
-from src.repository.images import get_image
 from src.schemas.comments import CommentCreate
 
 

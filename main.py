@@ -1,23 +1,21 @@
-from ipaddress import ip_address
 from contextlib import asynccontextmanager
-from typing import Callable
+from ipaddress import ip_address
 from pathlib import Path
+from typing import Callable
 
+import redis.asyncio as redis
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 from fastapi_limiter import FastAPILimiter
-import redis.asyncio as redis
 from sqlalchemy import text
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.db import get_db
-
-from src.routes import auth, users, tags, images, comments
 from src.conf.config import config
+from src.database.db import get_db
+from src.routes import auth, comments, images, tags, users
 
 
 @asynccontextmanager

@@ -9,8 +9,8 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.conf.config import config
 from src.conf import messages
+from src.conf.config import config
 from src.database.db import get_db
 from src.repository import users as repository_users
 
@@ -122,8 +122,9 @@ class Auth:
             print("User from cache")
             user = pickle.loads(user)
         return user
- 
-    async def get_current_active_user(self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+
+    async def get_current_active_user(
+        self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
     ):
         """The get_current_active_user function returns the current active user based on the access token.
 
@@ -136,11 +137,17 @@ class Auth:
         """
         user = await self.get_current_user(token, db)
         if not user.is_active:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You are not active user")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You are not active user",
+            )
         return user
 
     async def get_current_active_user_with_role(
-            self, required_role: list, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+        self,
+        required_role: list,
+        token: str = Depends(oauth2_scheme),
+        db: AsyncSession = Depends(get_db),
     ):
         """The get_current_active_user_with_role function returns the current
             active user based on the access token and check their role.
@@ -155,7 +162,10 @@ class Auth:
         """
         user = await self.get_current_active_user(token, db)
         if user.role.name not in required_role:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.NOT_ENOUGH_PERMISSIONS)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=messages.NOT_ENOUGH_PERMISSIONS,
+            )
         return user
 
     def create_email_token(self, data: dict):
@@ -237,9 +247,18 @@ auth_service = Auth()
 
 
 def role_required(required_role: list):
-    async def wrapper(token: str = Depends(auth_service.oauth2_scheme), db: AsyncSession = Depends(get_db)):
-        user = await auth_service.get_current_active_user_with_role(required_role, token, db)
+    async def wrapper(
+        token: str = Depends(auth_service.oauth2_scheme),
+        db: AsyncSession = Depends(get_db),
+    ):
+        user = await auth_service.get_current_active_user_with_role(
+            required_role, token, db
+        )
         if not user:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=messages.NOT_ENOUGH_PERMISSIONS)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=messages.NOT_ENOUGH_PERMISSIONS,
+            )
         return user
+
     return wrapper
