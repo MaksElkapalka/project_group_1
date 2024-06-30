@@ -8,7 +8,7 @@ from src.conf import messages
 from src.database.db import get_db
 from src.entity.models import User
 from src.repository import tags as repository_tags
-from src.schemas.tag import TagResponse, TagSchema
+from src.schemas.tag import TagResponse, TagSchema, TagUpdateSchema
 from src.services.auth import auth_service, role_required
 
 router = APIRouter(prefix="/tags", tags=["tags"])
@@ -80,7 +80,7 @@ async def create_tags(body: TagSchema, db: AsyncSession = Depends(get_db)):
     dependencies=[Depends(role_required(["admin", "moderator"]))],
 )
 async def update_tag(
-    body: TagSchema, tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)
+    body: TagUpdateSchema, tag_id: int = Path(ge=1), db: AsyncSession = Depends(get_db)
 ):
     """The update_tag function updates a tag.
 

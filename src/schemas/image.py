@@ -12,6 +12,7 @@ class ImageSchema(BaseModel):
     description: str
 
 class ImageCreate(BaseModel):
+    id: int
     url: str
     description: str
     created_at: datetime
