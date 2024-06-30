@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List
 
 from fastapi import (
@@ -11,8 +10,7 @@ from fastapi import (
     Query,
     status,
 )
-from fastapi.responses import JSONResponse
-from fastapi.templating import Jinja2Templates
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.entity.models import User
@@ -26,9 +24,9 @@ from src.schemas.image import (
     Transformation,
     Roundformation,
 )
-from src.services.auth import auth_service, role_required
+from src.services.auth import auth_service, image_owner_or_admin
 from src.conf import messages
-from src.repository.qr import generate_qr_code, generate_qr_code_with_url
+from src.repository.qr import generate_qr_code_with_url
 
 router = APIRouter(prefix="/images", tags=["images"])
 
