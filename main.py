@@ -13,6 +13,7 @@ from fastapi_limiter import FastAPILimiter
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.repository.images import get_all_images
 from src.conf.config import config
 from src.database.db import get_db
 from src.routes import auth, comments, images, tags, users
@@ -78,9 +79,9 @@ async def ban_ips(request: Request, call_next: Callable):
 
 
 BASE_DIR = Path(__file__).parent
-directory = BASE_DIR.joinpath("frontend").joinpath("static")
+directory = BASE_DIR.joinpath("static")
 
-app.mount("/static", StaticFiles(directory=directory), name="static")
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
@@ -88,24 +89,19 @@ app.include_router(tags.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
 
-templates = Jinja2Templates(directory=BASE_DIR / "frontend" / "templates")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    """The index function is responsible for returning the index page of our website.
-        It does this by using a TemplateResponse object, which takes in two arguments:
-            1) The name of the template to be rendered (in this case, 'index.html')
-            2) A context dictionary containing any variables that need to be passed into the template
-
-    Args:
-        request (Request): Get the request object.
-
-    Returns:
-        Templateresponse: A templateresponse object
-    """
+async def index(
+    request: Request,
+    limit: int = 10,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+):
+    images = await get_all_images(limit, offset, db)
     return templates.TemplateResponse(
-        "index.html", context={"request": request, "our": "Here was me! Mew was here!"}
+        "index.html", {"request": request, "images": images}
     )
 
 
