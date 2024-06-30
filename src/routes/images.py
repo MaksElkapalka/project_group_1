@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.entity.models import User
 from src.database.db import get_db
 from src.repository import images as repository_images
+
 from src.schemas.image import (
     ImageUpdateSchema,
     ImageResponse,
@@ -57,10 +58,7 @@ async def upload_image(
 @router.put(
     "/update/{image_id}",
     response_model=ImageResponse,
-    dependencies=[
-        Depends(auth_service.get_current_active_user),
-        Depends(role_required(["admin"])),
-    ],
+    dependencies=[Depends(image_owner_or_admin)],
 )
 async def update_image(
     body: ImageUpdateSchema, image_id: int, db: AsyncSession = Depends(get_db)
@@ -127,13 +125,7 @@ async def get_image(
     return result
 
 
-@router.delete(
-    "/{image_id}",
-    dependencies=[
-        Depends(auth_service.get_current_active_user),
-        Depends(role_required(["admin"])),
-    ],
-)
+@router.delete("/{image_id}", dependencies=[Depends(image_owner_or_admin)])
 async def delete_image(
     image_id: int,
     db: AsyncSession = Depends(get_db),
@@ -153,9 +145,6 @@ async def delete_image(
             status_code=status.HTTP_404_NOT_FOUND, detail=messages.IMAGE_NOT_FOUND
         )
     return {"message": "Image deleted successfully"}
-
-
-# TODO: Написати функцію, яка дає QR для будь-якого зображення
 
 
 @router.get("/qr_code")
