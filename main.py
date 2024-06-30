@@ -78,7 +78,7 @@ async def ban_ips(request: Request, call_next: Callable):
 
 
 BASE_DIR = Path(__file__).parent
-directory = BASE_DIR.joinpath("src").joinpath("static")
+directory = BASE_DIR.joinpath("frontend").joinpath("static")
 
 app.mount("/static", StaticFiles(directory=directory), name="static")
 
@@ -88,7 +88,7 @@ app.include_router(tags.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(comments.router, prefix="/api")
 
-templates = Jinja2Templates(directory=BASE_DIR / "src" / "templates")
+templates = Jinja2Templates(directory=BASE_DIR / "frontend" / "templates")
 
 
 @app.get("/", response_class=HTMLResponse)
