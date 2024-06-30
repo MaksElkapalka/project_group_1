@@ -2,6 +2,7 @@ import unittest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,21 +44,14 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
 
     @patch("cloudinary.uploader.upload")
     async def test_upload_image(self, mock_upload):
-        # Налаштування моку cloudinary.uploader.upload
         mock_upload.return_value = {"url": "http://example.com/image.jpg"}
-
-        # Мок файлу
         mock_file = MagicMock(spec=UploadFile)
         mock_file.filename = "test_image.jpg"
         mock_file.content_type = "image/jpeg"
         mock_file.read.return_value = b"file_content"
-
-        # Виклик функції upload_image
         image = await upload_image(
             file=mock_file, description="Test Image", db=self.session, user=self.user
         )
-
-        # Перевірка результатів
         self.assertEqual(image.url, "http://example.com/image.jpg")
         self.assertEqual(image.description, "Test Image")
         self.assertEqual(image.user_id, self.user.id)
@@ -72,7 +66,6 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
             user_id=self.user.id,
         )
 
-        # Створення асинхронного мока для результату запиту
         mocked_image_result = MagicMock()
         mocked_image_result.unique.return_value.scalar_one_or_none.return_value = image
         self.session.execute.return_value = mocked_image_result
@@ -149,28 +142,50 @@ class TestImageRepository(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(saved_image.description, image_description)
         self.assertEqual(saved_image.user_id, self.user.id)
 
+    @pytest.mark.asyncio
     @patch("cloudinary.CloudinaryImage.build_url")
     async def test_get_transformed_url(self, mock_build_url):
         mock_build_url.return_value = "http://example.com/transformed_image.jpg"
 
-        result = await get_transformed_url(
-            "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
-        )
+        async def mock_get_image(image_id, db, user):
+            mock_image = MagicMock()
+            mock_image.url = "http://example.com/image.jpg"
+            return mock_image
 
-        self.assertEqual(result, "http://example.com/transformed_image.jpg")
+        with patch("src.repository.images.get_image", side_effect=mock_get_image):
+            result = await get_transformed_url(
+                image_id=1,
+                transformations={"crop": "fill"},
+                user=self.user,
+                db=self.session,
+            )
+
+        expected_url = "http://example.com/transformed_image.jpg"
+        assert result == expected_url
         self.session.add.assert_called()
         self.session.commit.assert_called_once()
         self.session.refresh.assert_called()
 
+    @pytest.mark.asyncio
     @patch("cloudinary.CloudinaryImage.build_url")
     async def test_get_foravatar_url(self, mock_build_url):
-        mock_build_url.return_value = "http://example.com/transformed_image.png"
+        mock_build_url.return_value = "http://example.com/transformed_image.jpg"
 
-        result = await get_foravatar_url(
-            "http://example.com/image.jpg", {"crop": "fill"}, self.user, self.session
-        )
+        async def mock_get_image(image_id, db, user):
+            mock_image = MagicMock()
+            mock_image.url = "http://example.com/image.jpg"
+            return mock_image
 
-        self.assertEqual(result, "http://example.com/transformed_image.png")
+        with patch("src.repository.images.get_image", side_effect=mock_get_image):
+            result = await get_foravatar_url(
+                image_id=1,
+                transformations={"crop": "fill"},
+                user=self.user,
+                db=self.session,
+            )
+
+        expected_url = "http://example.com/transformed_image.png"
+        self.assertEqual(result, expected_url)
         self.session.add.assert_called()
         self.session.commit.assert_called_once()
         self.session.refresh.assert_called()

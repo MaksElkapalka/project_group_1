@@ -3,16 +3,15 @@ from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
-    Date,
+    Column,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     String,
-    func,
-    Text,
     Table,
-    Column,
-    Enum,
+    Text,
+    func,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -27,7 +26,7 @@ image_tag_table = Table(
     "image_tags",
     Base.metadata,
     Column("image_id", Integer, ForeignKey("images.id"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True)
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
 
 
@@ -35,7 +34,9 @@ class Tag(Base):
     __tablename__ = "tags"
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(25), nullable=False, unique=True)
-    images: Mapped[list['Image']] = relationship('Image', secondary=image_tag_table, back_populates='tags')
+    images: Mapped[list["Image"]] = relationship(
+        "Image", secondary=image_tag_table, back_populates="tags"
+    )
 
 
 class Image(Base):
@@ -48,12 +49,13 @@ class Image(Base):
         DateTime, default=func.now(), onupdate=func.now()
     )
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    user: Mapped["User"] = relationship(
-        "User", back_populates="images", lazy="joined"
+    user: Mapped["User"] = relationship("User", back_populates="images", lazy="joined")
+    comments: Mapped[list["Comment"]] = relationship(
+        "Comment", back_populates="image", cascade="all, delete-orphan"
     )
-    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="image", cascade="all, delete-orphan")
-    tags: Mapped[list["Tag"]] = relationship("Tag", secondary=image_tag_table, back_populates="images")
-
+    tags: Mapped[list["Tag"]] = relationship(
+        "Tag", secondary=image_tag_table, back_populates="images"
+    )
 
 
 class Comment(Base):
@@ -64,16 +66,16 @@ class Comment(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=func.now(), onupdate=func.now()
     )
-    image_id: Mapped[int] = mapped_column(Integer, ForeignKey('images.id'))
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'))
-    image: Mapped['Image'] = relationship("Image", back_populates='comments')
-    user: Mapped['User'] = relationship("User", back_populates='comments')
+    image_id: Mapped[int] = mapped_column(Integer, ForeignKey("images.id"))
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    image: Mapped["Image"] = relationship("Image", back_populates="comments")
+    user: Mapped["User"] = relationship("User", back_populates="comments")
 
 
 class Role(enum.Enum):
-    admin: str = 'admin'
-    moderator: str = 'moderator'
-    user: str = 'user'
+    admin: str = "admin"
+    moderator: str = "moderator"
+    user: str = "user"
 
 
 class User(Base):
@@ -82,7 +84,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), nullable=False)
     email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
-    role: Mapped[Enum] = mapped_column('role', Enum(Role), default=Role.user, nullable=True)
+    role: Mapped[Enum] = mapped_column(
+        "role", Enum(Role), default=Role.user, nullable=True
+    )
     access_token: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -94,5 +98,5 @@ class User(Base):
     avatar: Mapped[str] = mapped_column(
         String(255), nullable=True, default=default_avatar_url
     )
-    images: Mapped[list["Image"]] = relationship('Image', back_populates='user')
-    comments: Mapped[list["Comment"]] = relationship('Comment', back_populates='user')
+    images: Mapped[list["Image"]] = relationship("Image", back_populates="user")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user")
