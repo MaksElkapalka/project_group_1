@@ -265,7 +265,6 @@ def role_required(required_role: list):
 
     return wrapper
 
-
 def image_owner_or_admin():
     async def wrapper(
         image_id: int,
@@ -281,3 +280,4 @@ def image_owner_or_admin():
         
         return current_user
     return wrapper
+
