@@ -12,7 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.conf import messages
 from src.conf.config import config
 from src.database.db import get_db
+from src.entity.models import User
 from src.repository import users as repository_users
+from src.repository.images import get_image
 
 
 class Auth:
@@ -235,7 +237,7 @@ class Auth:
         """
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            return payload["email"]
+            return payload["sub"]
         except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -261,4 +263,21 @@ def role_required(required_role: list):
             )
         return user
 
+    return wrapper
+
+
+def image_owner_or_admin():
+    async def wrapper(
+        image_id: int,
+        current_user: User = Depends(auth_service.get_current_active_user),
+        db: AsyncSession = Depends(get_db)
+    ):
+        image = await get_image(image_id, db, current_user)
+        if image is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+        
+        if current_user.id != image.user_id and current_user.role.name != "admin":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        
+        return current_user
     return wrapper

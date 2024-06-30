@@ -16,7 +16,7 @@ from src.entity.models import User
 from src.database.db import get_db
 from src.repository import images as repository_images
 from src.schemas.image import ImageUpdateSchema, ImageResponse, ImageCreate, Transformation, Roundformation
-from src.services.auth import auth_service, role_required
+from src.services.auth import auth_service, role_required, image_owner_or_admin
 from src.conf import messages
 from src.repository.qr import generate_qr_code, generate_qr_code_with_url
 
@@ -46,8 +46,7 @@ async def upload_image(
 
 @router.put("/update/{image_id}",
             response_model=ImageResponse,
-            dependencies=[Depends(auth_service.get_current_active_user),
-                          Depends(role_required(["admin"]))]
+            dependencies=[Depends(image_owner_or_admin)]
 )
 async def update_image(
     body: ImageUpdateSchema,
@@ -107,8 +106,7 @@ async def get_image(
     return result
 
 @router.delete("/{image_id}",
-               dependencies=[Depends(auth_service.get_current_active_user),
-                             Depends(role_required(["admin"]))]
+               dependencies=[Depends(image_owner_or_admin)]
 )
 async def delete_image(
     image_id: int,
