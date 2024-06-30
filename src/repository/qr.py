@@ -1,5 +1,6 @@
-import qrcode
 from io import BytesIO
+
+import qrcode
 from fastapi.responses import StreamingResponse
 from PIL import Image, ImageDraw, ImageFont
 
@@ -23,9 +24,9 @@ def generate_qr_code_with_url(url: str) -> StreamingResponse:
     qr.add_data(url)
     qr.make(fit=True)
 
-    img = qr.make_image(fill='black', back_color='white').convert('RGB')
-    
-    font = ImageFont.load_default()  
+    img = qr.make_image(fill="black", back_color="white").convert("RGB")
+
+    font = ImageFont.load_default()
 
     draw = ImageDraw.Draw(img)
 
@@ -38,17 +39,20 @@ def generate_qr_code_with_url(url: str) -> StreamingResponse:
 
     text_position = (0, img_height + 10)
 
-    new_img = Image.new('RGB', (text_width, img_height + text_height + 20), (255, 255, 255))
+    new_img = Image.new(
+        "RGB", (text_width, img_height + text_height + 20), (255, 255, 255)
+    )
     new_img.paste(img, (0, 0))
 
     draw = ImageDraw.Draw(new_img)
-    draw.text(text_position, url, fill='black', font=font)
+    draw.text(text_position, url, fill="black", font=font)
 
     buf = BytesIO()
-    new_img.save(buf, format='PNG')
+    new_img.save(buf, format="PNG")
     buf.seek(0)
 
     return StreamingResponse(buf, media_type="image/png")
+
 
 def generate_qr_code(url: str) -> StreamingResponse:
     """The generate_qr_code function generates a QR code from the given data.
@@ -68,7 +72,7 @@ def generate_qr_code(url: str) -> StreamingResponse:
     qr.add_data(url)
     qr.make(fit=True)
 
-    img = qr.make_image(fill='black', back_color='white')
+    img = qr.make_image(fill="black", back_color="white")
 
     buf = BytesIO()
     img.save(buf)
