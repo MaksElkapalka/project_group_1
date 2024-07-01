@@ -6,8 +6,8 @@ from fastapi import status
 
 
 class TestApp(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
-        self.client = TestClient(app)
+    # def setUp(self):
+    #     self.client = TestClient(app)
 
     async def asyncSetUp(self):
         self.client = AsyncClient(app=app, base_url="http://test")

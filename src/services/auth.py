@@ -237,7 +237,7 @@ class Auth:
         """
         try:
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
-            return payload["sub"]
+            return payload["email"]
         except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
