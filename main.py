@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from ipaddress import ip_address
+import os
 from pathlib import Path
 from typing import Callable
 
@@ -12,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi_limiter import FastAPILimiter
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+import uvicorn
 
 from src.repository.images import get_all_images
 from src.conf.config import config
@@ -81,7 +83,7 @@ async def ban_ips(request: Request, call_next: Callable):
 BASE_DIR = Path(__file__).parent
 directory = BASE_DIR.joinpath("static")
 
-app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+app.mount("/static", StaticFiles(directory=directory), name="static")
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
@@ -129,3 +131,12 @@ async def healthchecker(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Error connecting to the database")
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000)),
+        log_level="info",
+    )
